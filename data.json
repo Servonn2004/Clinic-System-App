@@ -1,0 +1,31 @@
+{
+  "students": {
+    "8230053": {
+      "id": "8230053",
+      "name": "Prince Devon Rodela",
+      "email": "princedevonrodela.ctu.edu.ph",
+      "birthdate": "2004-02-16",
+      "password": "2004-02-16",
+      "firstLogin": true,
+      "appointments": [],
+      "picture": ""
+    },
+    "8230054": {
+      "id": "8230054",
+      "name": "Maria Santos",
+      "email": "maria@student.ctu.edu.ph",
+      "birthdate": "2001-05-20",
+      "password": "2001-05-20",
+      "firstLogin": true,
+      "appointments": [],
+      "picture": ""
+    }
+  },
+  "staff": [
+    {"id": 1, "name": "Dr. Carlos Reyes", "specialty": "Doctor", "email": "carlos@clinic.ctu.edu.ph", "slots": []},
+    {"id": 2, "name": "Dr. Maria Garcia", "specialty": "Dentist", "email": "maria@clinic.ctu.edu.ph", "slots": []},
+    {"id": 3, "name": "Nurse John", "specialty": "Nurse", "email": "john@clinic.ctu.edu.ph", "slots": []}
+  ],
+  "appointments": [],
+  "staffSchedules": {}
+}

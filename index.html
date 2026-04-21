@@ -1,0 +1,4362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTU Clinic Reservation System</title>
+
+<style>
+
+:root {
+    /* black & white color scheme */
+    --bg-color: #ffffff;
+    --card-color: #ffffff;
+    --text-color: #000000;
+    --accent-color: #000000;
+    --shadow-dark: rgba(0,0,0,0.2);
+    --shadow-light: rgba(255,255,255,0.7);
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family: sans-serif;
+    color: var(--text-color);
+}
+
+body{
+    min-height:100vh;
+    background: var(--bg-color);
+    /* center overall app container */
+    display:flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 0;
+    margin: 0;
+    font-size: 14px;
+}
+
+.loading-screen{
+    position: fixed;
+    inset: 0;
+    background: var(--bg-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loading-logo{
+    width: 180px;
+    height: 180px;
+    object-fit: contain;
+}
+
+/* sidebar layout */
+.app{
+    width: 100%;
+    max-width: 480px; /* Phone width */
+    height: 100%;
+    background: var(--card-color);
+    border-radius: 0; /* Remove rounded corners */
+    overflow: hidden;
+    box-shadow: none; /* Remove shadows */
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar{
+    width:200px;
+    background: var(--card-color);
+    padding:20px;
+    box-shadow: 2px 0 6px var(--shadow-dark);
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    overflow-y:auto;
+    scrollbar-width: none;
+}
+
+.sidebar::-webkit-scrollbar{
+    display: none;
+}
+
+.sidebar button.active{
+    background: var(--shadow-dark);
+    color: var(--card-color);
+}
+
+.main{
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.main::-webkit-scrollbar{
+    display: none;
+}
+
+/* ensure existing .app rules are kept for other properties */
+
+/* move legacy card style into main content area */
+.main{
+    background: var(--card-color);
+    border-radius:12px;
+    padding:24px;
+    box-shadow: 
+        8px 8px 16px #d1cde8,
+        -8px -8px 16px #ffffff;
+    color: var(--text-color);
+}
+
+h2{
+    text-align:center;
+    margin-bottom:16px;
+    font-size:24px;
+    font-weight:600;
+    color: var(--text-color);
+}
+
+input, select{
+    width:100%;
+    padding:14px;
+    margin:10px 0;
+    border:none;
+    border-radius:8px;
+    outline:none;
+    background: var(--card-color);
+    font-size:16px;
+    color: var(--text-color);
+    box-shadow: 
+        inset 4px 4px 12px #d1cde8,
+        inset -4px -4px 12px #ffffff;
+    transition: 0.3s;
+}
+
+input:focus, select:focus{
+    box-shadow: 
+        inset 6px 6px 14px #d1cde8,
+        inset -6px -6px 14px #ffffff;
+}
+
+input::placeholder {
+    color: #9a9aaa;
+}
+
+button{
+    padding:12px;
+    font-size:14px;
+    border-radius:8px;
+    background: var(--card-color);
+    color: var(--text-color);
+    font-weight:600;
+    cursor:pointer;
+    transition: all 0.3s;
+    box-shadow: 
+        5px 5px 12px #d1cde8,
+        -5px -5px 12px #ffffff;
+}
+
+button:hover{
+    box-shadow: 
+        7px 7px 14px #d1cde8,
+        -7px -7px 14px #ffffff;
+    transform: translateY(-2px);
+}
+
+button:active{
+    box-shadow: 
+        inset 3px 3px 8px #d1cde8,
+        inset -3px -3px 8px #ffffff;
+    transform: translateY(0);
+}
+
+.profile-pic {
+    display:block;
+    width:80px;
+    height:80px;
+    border-radius:50%;
+    margin:0 auto 12px;
+    object-fit:cover;
+    background: var(--bg-color);
+    box-shadow:
+        4px 4px 12px var(--shadow-dark),
+        -4px -4px 12px var(--shadow-light);
+}
+
+.cta-btn{
+    display:inline-block;
+    /* width handled separately to allow tab buttons to size to content */
+    padding:14px;
+    margin:10px 0;
+    border:none;
+    border-radius:12px;
+    background: var(--accent-color);
+    color:#fff;
+    font-weight:600;
+    cursor:pointer;
+    text-align:center;
+    transition: all 0.3s;
+    box-shadow:
+        5px 5px 12px var(--shadow-dark),
+        -5px -5px 12px var(--shadow-light);
+}
+
+/* default full-width for normal buttons, but not for tabs */
+.cta-btn:not(.admin-tab) {
+    width:100%;
+}
+
+.cta-btn:hover{
+    box-shadow:
+        7px 7px 14px var(--shadow-dark),
+        -7px -7px 14px var(--shadow-light);
+    transform: translateY(-2px);
+}
+
+.cta-btn:active{
+    box-shadow:
+        inset 3px 3px 8px var(--shadow-dark),
+        inset -3px -3px 8px var(--shadow-light);
+    transform: translateY(0);
+}
+
+/* ensure admin tabs have auto width */
+.admin-tab{
+    width:auto;
+    margin:5px;
+}
+
+.hidden{
+    display:none;
+}
+
+.dashboard{
+    margin-top:30px;
+}
+
+.dashboard > h2{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.admin-section{
+    margin-top:20px;
+}
+
+.card{
+    background: #e8e8f0;
+    padding:20px;
+    border-radius:20px;
+    margin-bottom:20px;
+    box-shadow: 
+        6px 6px 14px #d1cde8,
+        -6px -6px 14px #ffffff;
+    border: none;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:14px;
+    table-layout:auto;
+}
+
+th, td{
+    padding:10px 6px;
+    text-align:center;
+    border-bottom: 1px solid #d1cde8;
+}
+
+th{
+    font-weight:600;
+    color: #6f6f8f;
+}
+
+.logout{
+    background: #e8e8f0;
+    color: #c94450;
+}
+
+.logout:hover{
+    box-shadow: 
+        0 0 0 2px rgba(201, 68, 80, 0.1),
+        5px 5px 12px #d1cde8,
+        -5px -5px 12px #ffffff;
+}
+
+.small-btn{
+    padding:6px 10px;
+    font-size:12px;
+    border-radius:12px;
+}
+
+.student-main-cell{
+    text-align:left;
+}
+
+.student-compact{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.student-thumb{
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    object-fit:cover;
+    box-shadow: 2px 2px 6px #d1cde8, -2px -2px 6px #ffffff;
+}
+
+.student-name{
+    font-weight:600;
+    color:#5f5f82;
+}
+
+.student-details-row td{
+    background:#f0eff7;
+}
+
+.student-details-box{
+    text-align:left;
+    border-radius:12px;
+    padding:12px;
+    box-shadow: inset 2px 2px 6px #d1cde8, inset -2px -2px 6px #ffffff;
+}
+
+.student-details-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));
+    gap:8px;
+    margin-bottom:10px;
+}
+
+.student-details-item{
+    font-size:13px;
+    color:#5f5f82;
+}
+
+.admin-badge{
+    background: #c9a876;
+    color:white;
+    padding:6px 12px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:600;
+    display:inline-block;
+    margin-bottom:15px;
+    box-shadow: 
+        3px 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+.admin-section{
+    background: #e8e8f0;
+    border-radius:20px;
+    padding:16px;
+    margin-top:10px;
+    margin-bottom:15px;
+    box-shadow: 
+        inset 3px 3px 8px #d1cde8,
+        inset -3px -3px 8px #ffffff;
+    border: none;
+}
+
+.admin-tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:15px;
+    border-bottom:none;
+    flex-wrap:wrap;
+}
+
+/* student dashboard navigation buttons */
+.student-nav{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:20px;
+}
+@media (max-width:600px){
+    .student-nav{flex-direction:column;align-items:center;}
+}
+.student-btn{
+    padding:12px 20px;
+    border:none;
+    border-radius:12px;
+    background:#e8e8f0;
+    color:#7a7aaa;
+    cursor:pointer;
+    transition:all 0.3s;
+    box-shadow:3px 3px 8px #d1cde8,-3px -3px 8px #ffffff;
+}
+.student-btn:hover{
+    transform: translateY(-1px);
+    box-shadow:5px 5px 12px #d1cde8,-5px -5px 12px #ffffff;
+}
+.student-btn.active{
+    background: var(--accent-color);
+    color:#fff;
+    box-shadow: inset 3px 3px 8px #d1cde8,inset -3px -3px 8px #ffffff;
+}
+
+.option-button-group{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:8px;
+    margin:10px 0;
+}
+
+.log-filter-group{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    justify-content:center;
+    margin:10px 0;
+}
+
+.log-filter-group .option-btn{
+    flex:1 1 130px;
+    min-width:130px;
+    margin:0;
+}
+
+.option-button-group.single-line{
+    grid-template-columns: 1fr;
+}
+
+.option-btn{
+    padding:10px 12px;
+    border:none;
+    border-radius:12px;
+    background:#e8e8f0;
+    color:#7a7aaa;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    box-shadow: 3px 3px 8px #d1cde8, -3px -3px 8px #ffffff;
+    transition: all 0.2s ease;
+}
+
+.option-btn.active{
+    background:#4a4a6a;
+    color:#fff;
+    box-shadow: inset 3px 3px 8px #363652, inset -3px -3px 8px #6b6b90;
+}
+
+.date-input-text{
+    width:100%;
+}
+
+.log-filter .date-input-text{
+    margin-top:6px;
+}
+
+.log-filter-generate{
+    width:100%;
+    margin-top:6px;
+}
+
+.picker-launch-btn{
+    width:100%;
+    margin-top:6px;
+    background:#e8e8f0;
+    color:#6f6f8f;
+}
+
+.booking-datetime-display{
+    width:100%;
+    margin-top:8px;
+    padding:14px;
+    border-radius:12px;
+    background:#f2f2f8;
+    color:#6f6f8f;
+    font-weight:600;
+    box-shadow: inset 3px 3px 8px #d1cde8, inset -3px -3px 8px #ffffff;
+}
+
+.picker-modal-content{
+    max-width:400px;
+    width:92%;
+    margin:5% auto;
+    max-height:none;
+    overflow-y:visible;
+    padding:14px;
+    border-radius:22px;
+}
+
+.picker-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+}
+
+.picker-step{
+    display:none;
+}
+
+.picker-step.active{
+    display:block;
+}
+
+.picker-card{
+    background:#f6f6fb;
+    border-radius:16px;
+    padding:12px;
+    box-shadow: inset 2px 2px 6px #d1cde8, inset -2px -2px 6px #ffffff;
+}
+
+.picker-title{
+    font-weight:700;
+    color:#4a4a6a;
+    margin-bottom:8px;
+    font-size:14px;
+}
+
+.calendar-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    margin-bottom:8px;
+}
+
+.calendar-nav{
+    width:36px !important;
+    min-width:36px !important;
+    max-width:36px !important;
+    height:32px !important;
+    min-height:32px !important;
+    max-height:32px !important;
+    flex: 0 0 36px;
+    padding:0;
+    margin:0;
+    border-radius:8px;
+    background:#eef0f8;
+    color:#5f5f7a;
+    box-shadow: 1px 1px 4px #d1cde8, -1px -1px 4px #ffffff;
+    font-size:14px;
+    font-weight:700;
+    line-height:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+#pickerMonthLabel{
+    flex:1;
+    text-align:center;
+    white-space:nowrap;
+    color:#4a4a6a;
+    font-size:16px;
+    font-weight:700;
+    line-height:1.1;
+}
+
+.calendar-weekdays,
+.calendar-days{
+    display:grid;
+    grid-template-columns:repeat(7, 1fr);
+    gap:5px;
+}
+
+.calendar-weekdays span{
+    text-align:center;
+    font-size:11px;
+    color:#7d7d9a;
+    font-weight:600;
+}
+
+.day-btn{
+    padding:7px 0;
+    margin:0;
+    border-radius:11px;
+    font-size:13px;
+    border:1px solid #c4c6d2;
+    box-shadow:none;
+    background:#f1f3fb;
+    color:#696a84;
+}
+
+.day-btn.other-month{
+    opacity:0.45;
+}
+
+.day-btn.disabled{
+    opacity:0.35;
+    cursor:not-allowed;
+    pointer-events:none;
+}
+
+.day-btn.active{
+    border-color:#1e6fbf !important;
+    background:#1e6fbf !important;
+    color:#fff !important;
+    box-shadow: 0 0 0 2px rgba(30, 111, 191, 0.18);
+    font-weight:700;
+}
+
+.calendar-days .day-btn.active,
+.calendar-days .day-btn.active span,
+.calendar-days .day-btn.active .label {
+    color: #fff !important;
+}
+
+.time-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:6px;
+    margin-top:10px;
+}
+
+.time-selector-wrapper{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:8px;
+    margin-top:10px;
+}
+
+.time-selector-col{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+}
+
+.time-selector-label{
+    font-size:11px;
+    font-weight:700;
+    color:#7d7d9a;
+    text-align:center;
+    text-transform:uppercase;
+}
+
+.hour-buttons-grid,
+.minute-buttons-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:4px;
+    max-height:160px;
+    overflow-y:auto;
+    padding-right:2px;
+}
+
+.hour-buttons-grid::-webkit-scrollbar,
+.minute-buttons-grid::-webkit-scrollbar{
+    width:3px;
+}
+
+.hour-buttons-grid::-webkit-scrollbar-track,
+.minute-buttons-grid::-webkit-scrollbar-track{
+    background:#f0f0f0;
+    border-radius:2px;
+}
+
+.hour-buttons-grid::-webkit-scrollbar-thumb,
+.minute-buttons-grid::-webkit-scrollbar-thumb{
+    background:#c4c6d2;
+    border-radius:2px;
+}
+
+.time-selector-btn{
+    padding:7px 4px;
+    border:1px solid #c4c6d2;
+    border-radius:6px;
+    background:#f1f3fb;
+    color:#696a84;
+    font-weight:600;
+    font-size:11px;
+    cursor:pointer;
+    box-shadow:none;
+    transition: all 0.2s ease;
+}
+
+.time-selector-btn:hover:not(.disabled){
+    box-shadow: 1px 1px 3px #d1cde8;
+    background:#e8ecf8;
+}
+
+.time-selector-btn.active{
+    border-color: #2d8aa0;
+    background: #d9f0ff;
+    color: #0a3e67;
+    font-weight: 700;
+    box-shadow: 0 0 0 1px rgba(45, 138, 160, 0.3);
+}
+
+.time-selector-btn:not(.active){
+    color: #3a4a62;
+}
+
+.time-selector-btn.disabled{
+    opacity:0.35;
+    cursor:not-allowed;
+    pointer-events:none;
+}
+
+.time-period-btn{
+    padding:8px 6px;
+    border:1px solid #c4c6d2;
+    border-radius:6px;
+    background:#f1f3fb;
+    color:#696a84;
+    font-weight:600;
+    font-size:11px;
+    cursor:pointer;
+    box-shadow:none;
+    transition: all 0.2s ease;
+}
+
+.time-period-btn:hover:not(.disabled){
+    box-shadow: 1px 1px 3px #d1cde8;
+    background:#e8ecf8;
+}
+
+.time-period-btn.active{
+    border-color:#2d8aa0;
+    background:#d9f0ff;
+    color:#0a3e67;
+    font-weight:700;
+    box-shadow: 0 0 0 1px rgba(45, 138, 160, 0.3);
+}
+
+.time-period-btn:not(.active){
+    color:#3a4a62;
+}
+
+.time-slot-btn{
+    padding:10px 6px;
+    border:1px solid #c4c6d2;
+    border-radius:8px;
+    background:#f1f3fb;
+    color:#696a84;
+    font-weight:600;
+    font-size:12px;
+    cursor:pointer;
+    box-shadow:none;
+    transition: all 0.2s ease;
+}
+
+.time-slot-btn:hover{
+    box-shadow: 2px 2px 6px #d1cde8, -2px -2px 6px #ffffff;
+    transform: translateY(-1px);
+}
+
+.time-slot-btn.active{
+    border-color:#1e6fbf;
+    background:#1e6fbf;
+    color:#fff !important;
+    box-shadow: 0 0 0 2px rgba(30, 111, 191, 0.2);
+}
+
+.time-slot-btn.disabled{
+    opacity:0.4;
+    cursor:not-allowed;
+    pointer-events:none;
+}
+
+.clock-input-wrap{
+    margin-top:6px;
+}
+
+.clock-input{
+    width:100%;
+    padding:14px;
+    border:1px solid #c4c6d2;
+    border-radius:12px;
+    background:#f1f3fb;
+    color:#4a4a6a;
+    font-size:16px;
+    font-weight:700;
+}
+
+.clock-selector{
+    display:grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap:10px;
+    margin-top:6px;
+}
+
+.clock-col{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+
+.clock-col-title{
+    font-size:11px;
+    font-weight:700;
+    color:#7d7d9a;
+    text-align:center;
+}
+
+.clock-choice{
+    padding:10px 8px;
+    border:1px solid #c4c6d2;
+    border-radius:10px;
+    background:#f1f3fb;
+    color:#696a84;
+    font-weight:700;
+    font-size:14px;
+    box-shadow:none;
+}
+
+.clock-choice.active{
+    border-color:#2d8aa0;
+    background:#2d8aa0;
+    color:#fff;
+}
+
+.time-choice{
+    padding:9px 6px;
+    font-size:13px;
+    margin:0;
+    border:1px solid #c4c6d2;
+    border-radius:12px;
+    background:#f1f3fb;
+    color:#696a84;
+    box-shadow:none;
+}
+
+.time-choice.active{
+    border-color:#2d8aa0;
+    background:#2d8aa0;
+    color:#fff;
+}
+
+.time-choice.disabled{
+    opacity:0.4;
+    cursor:not-allowed;
+    pointer-events:none;
+}
+
+.picker-selection-note{
+    margin-top:8px;
+    font-size:11px;
+    color:#6f6f8f;
+    font-weight:600;
+}
+
+.picker-actions{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+}
+
+/* Force picker controls to use picker theme, not global CTA dark style */
+#bookingPickerModal button{
+    color:#5f5f7a;
+}
+
+#bookingPickerModal .calendar-nav,
+#bookingPickerModal .day-btn,
+#bookingPickerModal .time-choice{
+    background:#f2f2f8;
+}
+
+#bookingPickerModal .picker-actions button{
+    flex:1;
+    border-radius:12px;
+    font-weight:600;
+    min-height:40px;
+    font-size:13px;
+}
+
+#bookingPickerModal .picker-actions .ui-btn-success{
+    background:#2d8aa0;
+    color:#fff;
+}
+
+#bookingPickerModal .picker-actions .ui-btn-muted{
+    background:#8b8ba1;
+    color:#fff;
+}
+
+#bookingPickerModal .close{
+    font-size:30px;
+    line-height:1;
+}
+
+@media (max-width:680px){
+    .picker-grid{ grid-template-columns:1fr; }
+    #pickerMonthLabel{
+        font-size:18px;
+    }
+    .calendar-nav{
+        width:32px !important;
+        min-width:32px !important;
+        max-width:32px !important;
+        height:30px !important;
+        min-height:30px !important;
+        max-height:30px !important;
+        flex: 0 0 32px;
+        font-size:13px;
+    }
+}
+
+.admin-tab{
+    padding:10px 14px;
+    border:none;
+    background: #e8e8f0;
+    color:#7a7aaa;
+    cursor:pointer;
+    transition: all 0.3s;
+    font-size:14px;
+    border-radius:12px;
+    box-shadow: 
+        3px 3px 8px #d1cde8,
+        -3px -3px 8px #ffffff;
+}
+
+.admin-tab:hover{
+    box-shadow: 
+        5px 5px 12px #d1cde8,
+        -5px -5px 12px #ffffff;
+}
+
+.admin-tab.active{
+    color: #6f6f8f;
+    box-shadow: 
+        inset 3px 3px 8px #d1cde8,
+        inset -3px -3px 8px #ffffff;
+}
+
+.settings-label-btn{
+    display:inline-block;
+    margin: 4px 0 10px;
+    cursor: pointer;
+}
+
+.settings-modal-overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 20, 45, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.settings-modal-overlay.hidden{
+    display: none !important;
+}
+
+.settings-modal{
+    width: min(420px, calc(100% - 32px));
+    background: #f4f5fb;
+    border-radius: 22px;
+    padding: 22px;
+    box-shadow:
+        12px 12px 24px rgba(0,0,0,0.12),
+        -8px -8px 24px rgba(255,255,255,0.8);
+    position: relative;
+}
+
+.settings-modal h3{
+    margin-top: 0;
+    margin-bottom: 14px;
+}
+
+.settings-modal .modal-close-btn{
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    font-size: 16px;
+    line-height: 30px;
+    cursor: pointer;
+    color: #5d5d7b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.settings-modal .modal-close-btn:hover{
+    background: #f0f2f8;
+}
+
+.settings-modal input{
+    width: 100%;
+    margin-bottom: 12px;
+}
+
+.settings-modal button{
+    width: 100%;
+    margin-top: 6px;
+}
+
+.app-logo{
+    display:block;
+    width:80px;
+    height:80px;
+    margin:0 auto 16px;
+    border-radius:50%;
+    background:transparent;
+    padding:0;
+    box-shadow:none;
+    object-fit:cover;
+    transition:transform 0.3s;
+}
+
+.app-logo:hover {
+    transform:scale(1.05);
+    box-shadow:none;
+}
+
+.tab-content{
+    display:none;
+    padding-right:5px;
+}
+
+.tab-content.active{
+    display:block;
+}
+
+.stats{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+    margin-bottom:20px;
+}
+
+.stat-box{
+    background: #e8e8f0;
+    padding:20px;
+    border-radius:16px;
+    text-align:center;
+    box-shadow: 
+        5px 5px 12px #d1cde8,
+        -5px -5px 12px #ffffff;
+    border: none;
+}
+
+.stat-number{
+    font-size:32px;
+    font-weight:700;
+    color: #7a7aaa;
+    margin-bottom:5px;
+}
+
+.stat-label{
+    font-size:14px;
+    color: #8a8aaa;
+}
+
+.dangerous-btn{
+    background: var(--card-color);
+    color: var(--text-color);
+    border: 1px solid var(--text-color);
+}
+
+input[type="password"]{
+    width:100% !important;
+}
+
+.reminder-box{
+    background: #e8e8f0;
+    padding:16px;
+    border-radius:16px;
+    margin-bottom:16px;
+    font-size:14px;
+    box-shadow: 
+        inset 3px 3px 8px #d1cde8,
+        inset -3px -3px 8px #ffffff;
+    color: #6f6f8f;
+    border: none;
+}
+
+.reminder-box strong{
+    color: #7a7aaa;
+}
+
+.reminder-box .link-btn{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(106, 104, 177, 0.16);
+    background: #eef0ff;
+    color: #2d307b;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.reminder-box .link-btn:hover{
+    background: #dde0ff;
+}
+
+.highlighted-row{
+    animation: row-highlight 3s ease-out;
+}
+
+@keyframes row-highlight{
+    0% { background-color: #fff7c4; }
+    100% { background-color: transparent; }
+}
+
+.profile-info{
+    background: #e8e8f0;
+    padding:20px;
+    border-radius:16px;
+    margin-bottom:16px;
+    box-shadow: 
+        inset 2px 2px 6px #d1cde8,
+        inset -2px -2px 6px #ffffff;
+    border: none;
+}
+
+.profile-info p{
+    margin:6px 0;
+    font-size:14px;
+    color: #6f6f8f;
+}
+
+.schedule-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(80px, 1fr));
+    gap:8px;
+    margin:10px 0;
+}
+
+.time-slot{
+    padding:8px;
+    text-align:center;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+    font-size:12px;
+    transition: all 0.3s;
+    background: #e8e8f0;
+    color: #7a7aaa;
+    box-shadow: 
+        3px 3px 8px #d1cde8,
+        -3px -3px 8px #ffffff;
+}
+
+.time-slot:hover{
+    box-shadow: 
+        5px 5px 12px #d1cde8,
+        -5px -5px 12px #ffffff;
+}
+
+.time-slot.booked{
+    background: #e8e8f0;
+    cursor: not-allowed;
+    color: #c94450;
+    box-shadow: 
+        inset 2px 2px 6px #d1cde8,
+        inset -2px -2px 6px #ffffff;
+}
+
+.staff-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin:10px 0;
+}
+
+.staff-card{
+    background: #e8e8f0;
+    border:none;
+    padding:12px;
+    border-radius:16px;
+    cursor:pointer;
+    text-align:center;
+    transition: all 0.3s;
+    box-shadow: 
+        4px 4px 10px #d1cde8,
+        -4px -4px 10px #ffffff;
+}
+
+.staff-card:hover{
+    box-shadow: 
+        6px 6px 14px #d1cde8,
+        -6px -6px 14px #ffffff;
+    transform: translateY(-2px);
+}
+
+.staff-card.selected{
+    background: #e8e8f0;
+    color: #6f6f8f;
+    box-shadow: 
+        inset 4px 4px 10px #d1cde8,
+        inset -4px -4px 10px #ffffff;
+}
+
+.staff-name{
+    font-weight:600;
+    margin-bottom:5px;
+    color: #6f6f8f;
+}
+
+.staff-spec{
+    font-size:12px;
+    color: #8a8aaa;
+}
+
+.log-filter{
+    display:flex;
+    gap:8px;
+    margin-bottom:12px;
+    flex-wrap:wrap;
+}
+
+.log-filter select{
+    width:auto;
+    flex:1;
+    min-width:120px;
+}
+
+.first-login-badge{
+    background: #c9a876;
+    color:#fff;
+    padding:6px 12px;
+    border-radius:20px;
+    display:inline-block;
+    margin-bottom:12px;
+    font-weight:600;
+    font-size:12px;
+    box-shadow: 
+        2px 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal{
+    display:none;
+    position:fixed;
+    z-index:1000;
+    left:0;
+    top:0;
+    width:100%;
+    height:100%;
+    background-color:rgba(0,0,0,0.2);
+}
+
+.modal-content{
+    background: #e8e8f0;
+    margin:10% auto;
+    padding:30px;
+    border:none;
+    border-radius:24px;
+    width:90%;
+    max-width:350px;
+    color: #5a5a7a;
+    box-shadow: 
+        12px 12px 24px #d1cde8,
+        -12px -12px 24px #ffffff;
+}
+
+.close{
+    color: #a0a0b8;
+    float:right;
+    font-size:28px;
+    font-weight:bold;
+    cursor:pointer;
+    transition: 0.3s;
+}
+
+.close:hover{
+    color: #6f6f8f;
+}
+
+.action-buttons{
+    display:flex;
+    gap:8px;
+    margin-top:12px;
+}
+
+.action-buttons button{
+    flex:1;
+    padding:10px;
+    font-size:14px;
+}
+
+.action-menu-container {
+    position: relative;
+    display: inline-block;
+}
+
+.ellipsis-btn {
+    background: transparent;
+    border: 1px solid #d1d1d6;
+    border-radius: 999px;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    font-size: 20px;
+    line-height: 1;
+    color: #444;
+    cursor: pointer;
+}
+
+.action-menu {
+    display: none;
+    position: absolute;
+    top: 34px;
+    right: 0;
+    left: auto;
+    width: 130px;
+    min-width: 130px;
+    background: #ffffff;
+    border: 1px solid #d1d1d6;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.14);
+    border-radius: 12px;
+    padding: 3px 0;
+    z-index: 999;
+}
+
+.action-menu.active {
+    display: block;
+}
+
+.action-menu button {
+    width: 100%;
+    border: none;
+    background: #fff;
+    text-align: center;
+    padding: 3px 1px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f1f6;
+    min-height: 30px;
+    line-height: 1.2;
+}
+
+.action-menu button:last-child {
+    border-bottom: none;
+}
+
+.action-menu button:hover {
+    background: #f1f3fb;
+}
+
+.action-menu .dangerous {
+    color: #c94450;
+}
+
+.action-menu button:hover {
+    background: #f1f3fb;
+}
+
+.action-menu .dangerous {
+    color: #c94450;
+}
+
+
+.success-msg{
+    background: #e8e8f0;
+    border:none;
+    color: #5a7a6f;
+    padding:12px;
+    border-radius:12px;
+    margin-bottom:15px;
+    font-size:14px;
+    box-shadow: 
+        inset 2px 2px 6px #d1cde8,
+        inset -2px -2px 6px #ffffff;
+}
+
+.cancel-receipt {
+    background: #f9faff;
+    border: 1px solid #b6cef9;
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #1f2d4b;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+}
+
+.cancel-receipt h4 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.cancel-receipt .receipt-info-button {
+    background: #e8f1ff;
+    border: 1px solid #c4d6f7;
+    color: #1f2d4b;
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cancel-receipt .receipt-info-button:hover {
+    background: #d8e9ff;
+}
+
+.cancel-receipt p {
+    margin: 4px 0;
+}
+
+.cancel-receipt .cancel-details {
+    margin-top: 8px;
+    border-top: 1px dashed #cfdff9;
+    padding-top: 8px;
+    display: none;
+}
+
+.cancel-reason-chip {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: #eff5ff;
+    color: #1f2d4b;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.cancel-reason-chip.inactive {
+    color: #7a7f96;
+    background: #f7f7fb;
+}
+
+.cancel-receipt .cancel-details.active {
+    display: block;
+}
+
+.error-msg{
+    background: #e8e8f0;
+    border:none;
+    color: #a85a6f;
+    padding:12px;
+    border-radius:12px;
+    margin-bottom:15px;
+    font-size:14px;
+    box-shadow: 
+        inset 2px 2px 6px #d1cde8,
+        inset -2px -2px 6px #ffffff;
+}
+
+.appointment-status-pending{
+    color: #b8a860;
+    font-weight:600;
+}
+
+.appointment-status-approved{
+    color: #6f9a7a;
+    font-weight:600;
+}
+
+.appointment-status-cancelled{
+    color: #a85a6f;
+    font-weight:600;
+}
+
+hr{
+    border:none;
+    border-top:1px solid #d1cde8;
+    margin:12px 0;
+}
+
+h3{
+    margin:20px 0 12px 0;
+    font-size:18px;
+    font-weight:600;
+    color: #6f6f8f;
+}
+
+h4{
+    margin:12px 0 6px 0;
+    font-size:16px;
+    font-weight:600;
+    color: #6f6f8f;
+}
+
+/* Notification Styles */
+.notification-badge {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #e8e8f0;
+    color: #6f6f8f;
+    padding: 16px 20px;
+    border-radius: 16px;
+    box-shadow: 
+        8px 8px 16px #d1cde8,
+        -8px -8px 16px #ffffff;
+    z-index: 2000;
+    max-width: 300px;
+    animation: slideIn 0.3s ease-out;
+}
+
+.notification-badge.urgent {
+    color: #a85a6f;
+    box-shadow: 
+        8px 8px 16px #d1cde8,
+        -8px -8px 16px #ffffff;
+}
+
+.notification-badge.success {
+    color: #6f9a7a;
+    box-shadow: 
+        8px 8px 16px #d1cde8,
+        -8px -8px 16px #ffffff;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 
+            8px 8px 16px #d1cde8,
+            -8px -8px 16px #ffffff;
+    }
+    50% {
+        box-shadow: 
+            10px 10px 20px #d1cde8,
+            -10px -10px 20px #ffffff;
+    }
+}
+
+.notification-badge.urgent {
+    animation: slideIn 0.3s ease-out, pulse 1s infinite;
+}
+
+/* Responsive Design */
+@media (min-width: 768px) {
+    /* Tablet/Laptop mode */
+    .app {
+        max-width: 600px;
+        padding: 32px;
+    }
+    
+    h2 {
+        font-size: 28px;
+        margin-bottom: 20px;
+    }
+    
+    .card {
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+    
+    input, select {
+        padding: 16px;
+        margin: 12px 0;
+    }
+    
+    button {
+        padding: 16px;
+        margin-top: 12px;
+    }
+    
+    .stats {
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 20px;
+    }
+}
+
+@media (min-width: 1024px) {
+    /* Desktop mode */
+    .app {
+        max-width: 700px;
+    }
+    
+    .stats {
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+}
+
+/* fix overlaps on small screens by stacking sidebar above main */
+@media (max-width: 767px) {
+    .app {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100%;
+        max-height: 220px;
+        overflow-y: auto;
+        box-shadow: none;
+        position: relative;
+        z-index: 2;
+    }
+    .main {
+        padding: 20px 10px;
+        position: relative;
+        z-index: 1;
+    }
+    /* ensure student nav hidden if sidebar showing (already added) */
+    .sidebar:not(.hidden) ~ .main .student-nav { display: none; }
+}
+
+/* Dark mode automatic */
+/* modern override removed to preserve pastel, card-based design */
+
+/* hide old tab row when using sidebar */
+.sidebar:not(.hidden) ~ .main .admin-tabs { display: none; }
+.sidebar:not(.hidden) ~ .main .student-nav { display: none; }
+
+/* new sidebar menu structure rules */
+.sidebar__wrapper {
+    --list-gap: 0.5rem;
+    display: flex;
+    flex-flow: column;
+    gap: var(--list-gap);
+}
+
+.sidebar__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-flow: column;
+    gap: 0.125rem;
+    overflow: hidden;
+}
+
+.sidebar__item {
+    block-size: var(--item);
+    border-radius: var(--brad-inner);
+}
+
+.item-heading {
+    display: flex;
+    align-items: end;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="loadingScreen" class="loading-screen">
+    <img class="loading-logo" src="349345690_224575416952360_5872693517820243683_n-removebg-preview-removebg-preview.png" alt="CTU Logo">
+</div>
+
+<div id="appRoot" class="app hidden">
+  <div class="main">
+    <!-- University Logo -->
+    <img id="siteLogo" class="app-logo" src="349345690_224575416952360_5872693517820243683_n-removebg-preview-removebg-preview.png" alt="CTU Logo">
+
+    <!-- LOGIN SECTION -->
+    <div id="loginSection" class="hidden">
+      <h2><strong>CTU Clinic Reservation System</strong></h2>
+      <p style="text-align:center; font-size:11px; color:rgba(110, 87, 87, 0.7); margin-bottom:12px;">Secure Student & Admin Portal</p>
+      <input type="text" id="loginId" placeholder="Student ID or Admin">
+      <input type="password" id="loginPassword" placeholder="Password">
+      <button onclick="login()">Login</button>
+      <p style="text-align:center; font-size:10px; color:rgba(64, 51, 51, 0.6); margin-top:10px;"></p>
+    </div>
+
+    <!-- FIRST LOGIN - CHANGE PASSWORD -->
+    <div id="firstLoginSection" class="hidden">
+      <h2>🔐 First Login - Change Password</h2>
+      <div class="first-login-badge">⚠️ FIRST TIME LOGIN</div>
+      <p style="margin-bottom:12px; font-size:12px;">For security, change your default password.</p>
+      <input type="password" id="newPasswordFirst" placeholder="New Password (min 6 characters)">
+      <input type="password" id="confirmPasswordFirst" placeholder="Confirm Password">
+      <button onclick="completeFirstLogin()">Update Password & Continue</button>
+    </div>
+
+    <!-- STUDENT DASHBOARD -->
+
+    <div id="studentDashboard" class="hidden dashboard">
+
+      <h2 id="studentWelcome"></h2>
+      <div class="admin-badge">🎓 STUDENT MODE</div>
+
+      <div class="admin-section">
+        <div class="admin-tabs">
+          <button class="admin-tab active" data-target="profile" onclick="switchStudentSection('profile')">👤 Profile</button>
+          <button class="admin-tab" data-target="book" onclick="switchStudentSection('book')">📅 Book</button>
+          <button class="admin-tab" data-target="appointments" onclick="switchStudentSection('appointments')">📋 My Appointments</button>
+          <button class="admin-tab" data-target="reminders" onclick="switchStudentSection('reminders')">⏰ Reminders</button>
+          <button class="admin-tab" data-target="settings" onclick="switchStudentSection('settings')">⚙️ Settings</button>
+        </div>
+
+        <div id="student-tab-profile" class="tab-content active">
+          <div class="card">
+            <h3>👤 My Profile</h3>
+            <!-- playful profile picture -->
+            <img id="profilePic" class="profile-pic" src="https://via.placeholder.com/80" alt="Profile Picture">
+            <div class="profile-info">
+              <p><strong>Student ID:</strong> <span id="profileStudentId"></span></p>
+              <p><strong>Name:</strong> <span id="profileName"></span></p>
+              <p><strong>Email:</strong> <span id="profileEmail"></span></p>
+              <p><strong>Birthdate:</strong> <span id="profileBirthdate"></span></p>
+            </div>
+          </div>
+        </div>
+
+        <div id="student-tab-book" class="tab-content hidden">
+          <div class="card">
+            <h3>📅 Book New Appointment</h3>
+            <input type="hidden" id="service" value="">
+            <input type="hidden" id="date" value="">
+            <div class="option-button-group">
+              <button type="button" class="option-btn service-btn" data-value="Medical" onclick="selectServiceOption('Medical', this)">🏥 Medical Consultation</button>
+              <button type="button" class="option-btn service-btn" data-value="Dental" onclick="selectServiceOption('Dental', this)">🦷 Dental Checkup</button>
+            </div>
+            <button type="button" class="picker-launch-btn" onclick="openBookingPicker()">📅 Open Calendar & Clock</button>
+            <div id="bookingDateTimeDisplay" class="booking-datetime-display">No date and time selected.</div>
+            <button onclick="bookAppointment()" style="margin-top:8px;">📝 Confirm Booking</button>
+          </div>
+        </div>
+
+        <div id="student-tab-appointments" class="tab-content hidden">
+          <div class="card">
+            <h3>📋 My Appointments</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Service</th>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Status</th>
+                  <th>Cancel Reason</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="studentAppointmentTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="student-tab-reminders" class="tab-content hidden">
+          <div class="card" id="remindersSection"></div>
+        </div>
+
+        <div id="student-tab-settings" class="tab-content hidden">
+          <div class="card" id="settingsSection">
+            <h3>⚙️ Account Settings</h3>
+            <button onclick="openProfileModal()" style="font-size:11px; padding:8px;">✏️ Edit Profile</button>
+            <button onclick="openPasswordModal()" style="font-size:11px; padding:8px; background:#4CAF50; margin-top:6px;">🔐 Change Password</button>
+            <button class="logout" onclick="logout()">🚪 Logout</button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ADMIN DASHBOARD -->
+
+    <div id="adminDashboard" class="hidden dashboard">
+
+      <h2 id="adminWelcome"></h2>
+      <div class="admin-badge">👨‍💼 ADMIN MODE - CLINIC STAFF</div>
+
+      <div class="admin-section">
+        <div class="admin-tabs">
+          <button class="admin-tab active" onclick="switchAdminTab('overview')">📊 Overview</button>
+          <button class="admin-tab" onclick="switchAdminTab('appointments')">📋 Appointments</button>
+          <button class="admin-tab" onclick="switchAdminTab('logs')">📊 Logs & Reports</button>
+          <button class="admin-tab" onclick="switchAdminTab('students')">👥 Students</button>
+          <button class="admin-tab" onclick="switchAdminTab('settings')">⚙️ Settings</button>
+        </div>
+
+        <!-- Overview Tab -->
+        <div id="tab-overview" class="tab-content active">
+          <h3>Dashboard Statistics</h3>
+          <div class="stats">
+            <div class="stat-box">
+              <div class="stat-number" id="totalCount">0</div>
+              <div class="stat-label">Total Appointments</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-number" id="pendingCount">0</div>
+              <div class="stat-label">Pending</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-number" id="approvedCount">0</div>
+              <div class="stat-label">Approved</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-number" id="cancelledCount">0</div>
+              <div class="stat-label">Cancelled</div>
+            </div>
+          </div>
+          <hr>
+          <h4>👥 Total Students: <span id="totalStudents">0</span></h4>
+          <h4>🏥 Total Providers: <span id="totalStaff">0</span></h4>
+          <div id="adminRemindersSection" class="reminder-box hidden" style="margin-top:16px;"></div>
+        </div>
+
+        <!-- Appointments Tab -->
+        <div id="tab-appointments" class="tab-content">
+          <h3>Manage All Appointments</h3>
+          <div id="adminCancelReceipt" class="cancel-receipt hidden" style="margin-bottom:12px;"></div>
+          <div id="studentCancelReceipt" class="cancel-receipt hidden" style="margin-bottom:12px; background:#fffced; border-color:#f0d19d;"></div>
+          <table>
+            <thead>
+              <tr>
+                <th>Student ID</th>
+                <th>Service</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Status</th>
+                <th>Cancel Reason</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="adminAppointmentTable"></tbody>
+          </table>
+        </div>
+
+        <!-- Logs & Reports Tab -->
+        <div id="tab-logs" class="tab-content">
+          <h3>Reservation Logs & Reports</h3>
+          <div class="log-filter">
+            <input type="hidden" id="logFilter" value="all">
+                        <div class="option-button-group log-filter-group">
+              <button type="button" class="option-btn log-filter-btn active" data-value="all" onclick="selectLogFilterOption('all', this)">All Records</button>
+              <button type="button" class="option-btn log-filter-btn" data-value="daily" onclick="selectLogFilterOption('daily', this)">📅 Daily</button>
+              <button type="button" class="option-btn log-filter-btn" data-value="weekly" onclick="selectLogFilterOption('weekly', this)">📆 Weekly</button>
+              <button type="button" class="option-btn log-filter-btn" data-value="monthly" onclick="selectLogFilterOption('monthly', this)">📊 Monthly</button>
+              <button type="button" class="option-btn log-filter-btn" data-value="approved" onclick="selectLogFilterOption('approved', this)">✓ Approved</button>
+              <button type="button" class="option-btn log-filter-btn" data-value="pending" onclick="selectLogFilterOption('pending', this)">⏳ Pending</button>
+              <button type="button" class="option-btn log-filter-btn" data-value="cancelled" onclick="selectLogFilterOption('cancelled', this)">✗ Cancelled</button>
+            </div>
+            <input type="text" id="logDate" class="date-input-text" placeholder="YYYY-MM-DD">
+                        <button class="log-filter-generate" onclick="generateLogs()" style="background:#ff9800;">🔍 Generate Report</button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Student ID</th>
+                <th>Service</th>
+                <th>Date & Time</th>
+                <th>Status</th>
+                <th>Approved Date</th>
+              </tr>
+            </thead>
+            <tbody id="logsTable"></tbody>
+          </table>
+          <div id="logsSummary" style="margin-top:15px;"></div>
+        </div>
+
+        <!-- Students Tab -->
+        <div id="tab-students" class="tab-content">
+          <h3>Registered Students</h3>
+          <div class="card" style="padding:12px; margin-bottom:12px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <input type="text" id="adminNewStudentId" placeholder="Student ID (e.g., 8230001)">
+              <input type="text" id="adminNewStudentName" placeholder="Full Name">
+              <input type="email" id="adminNewStudentEmail" placeholder="Email">
+              <input type="date" id="adminNewStudentBirthdate" placeholder="Birthdate">
+              <button onclick="adminAddStudent()" style="background:#4CAF50;">➕ Add Student</button>
+            </div>
+            <p style="font-size:12px; color:#5f5f7a; margin-top:4px;">Default password is the student birthdate.</p>
+          </div>
+          <div class="card" style="padding:12px; margin-bottom:12px;">
+            <div style="display:grid; grid-template-columns: 1fr auto; gap:10px; align-items:center;">
+              <input type="text" id="adminSearchStudentId" placeholder="Search Student ID" style="padding:10px; border-radius:8px; border:1px solid #c4c6d2;">
+              <button onclick="searchAdminStudentById()" style="background:#2196F3; color:#fff;">🔎 Search</button>
+            </div>
+            <div id="studentSearchResult" style="margin-top:10px;"></div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="studentsTable"></tbody>
+          </table>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="tab-settings" class="tab-content">
+          <h3>Admin Settings</h3>
+
+          <button type="button" id="adminPasswordOpenBtn" class="settings-label-btn" onclick="openAdminPasswordModal()">🔐 Change Admin Password</button>
+
+          <div id="adminPasswordModal" class="settings-modal-overlay hidden" style="display:none;" onclick="adminPasswordModalBackgroundClick(event)">
+            <div class="settings-modal">
+              <button class="modal-close-btn" onclick="closeAdminPasswordModal()">✕</button>
+              <h3>Change Admin Password</h3>
+              <input type="password" id="currentPassword" placeholder="Current Password">
+              <input type="password" id="newPassword" placeholder="New Password">
+              <input type="password" id="confirmPassword" placeholder="Confirm Password">
+              <button onclick="changeAdminPassword()" style="background:#4CAF50;">🔄 Update Password</button>
+            </div>
+          </div>
+
+          <hr>
+
+          <h4>💾 Backup & Reset</h4>
+          <button onclick="downloadBackup()" style="background:#2196F3;">💾 Download Backup</button>
+          <button onclick="clearAllData()" class="dangerous-btn" style="margin-top:8px;">⚠️ Clear All Data</button>
+          <p style="font-size:10px; margin-top:6px; color:#ff9999;">WARNING: This will permanently delete all data.</p>
+
+          <hr>
+
+          <!-- logout inside admin settings -->
+          <button class="logout" onclick="logout()" style="margin-top:12px;">🚪 Logout</button>
+        </div>
+      </div>
+
+    </div>
+
+    </div>
+
+    </div> <!-- end .main -->
+    </div> <!-- end .app -->
+
+    <!-- MODALS -->
+
+    <!-- Edit Profile Modal -->
+    <div id="profileModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal('profileModal')">&times;</span>
+        <h3>Edit Profile</h3>
+        <input type="file" id="editProfilePic" accept="image/*" style="margin-bottom:8px;">
+        <input type="text" id="editName" placeholder="Full Name">
+        <input type="email" id="editEmail" placeholder="Email">
+        <div class="action-buttons">
+          <button onclick="saveProfile()">💾 Save Changes</button>
+          <button onclick="closeModal('profileModal')" style="background:#999;">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="passwordModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal('passwordModal')">&times;</span>
+        <h3>Change Your Password</h3>
+        <input type="password" id="oldPassword" placeholder="Current Password">
+        <input type="password" id="studentNewPassword" placeholder="New Password (min 6 characters)" style="margin-top:6px;">
+        <input type="password" id="studentConfirmPassword" placeholder="Confirm Password" style="margin-top:6px;">
+        <div class="action-buttons">
+          <button onclick="changeStudentPassword()">🔐 Update Password</button>
+          <button onclick="closeModal('passwordModal')" style="background:#999;">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reset Password Modal -->
+    <div id="resetPasswordModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal('resetPasswordModal')">&times;</span>
+        <h3 id="resetPasswordTitle">Reset Password</h3>
+        <p id="resetPasswordTarget" style="font-size:12px; margin:4px 0 8px 0;"></p>
+        <input type="password" id="resetNewPassword" placeholder="New Password (min 6 characters)" style="margin-top:6px;">
+        <input type="password" id="resetConfirmPassword" placeholder="Confirm Password" style="margin-top:6px;">
+        <div class="action-buttons">
+          <button onclick="resetStudentPassword()">🔑 Reset Password</button>
+          <button onclick="closeModal('resetPasswordModal')" style="background:#999;">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reschedule Modal -->
+    <div id="rescheduleModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal('rescheduleModal')">&times;</span>
+        <h3>Reschedule Appointment</h3>
+        <input type="date" id="rescheduleDate">
+        <input type="time" id="rescheduleTime">
+        <p id="rescheduleStaff" style="margin:10px 0; font-size:13px;"></p>
+        <div class="action-buttons">
+          <button onclick="confirmReschedule()">✓ Confirm</button>
+          <button onclick="closeModal('rescheduleModal')" style="background:#999;">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="adminCancelModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal('adminCancelModal')">&times;</span>
+        <h3>Admin Cancel Appointment</h3>
+        <label for="adminCancelReason">Cancel Reason</label>
+        <select id="adminCancelReason" style="margin-bottom:10px;">
+          <option value="">Select reason</option>
+          <option value="No Staff Available">No Staff Available</option>
+          <option value="Fully Booked">Fully Booked</option>
+          <option value="Other">Other</option>
+        </select>
+        <input type="text" id="adminCancelOtherReason" placeholder="If other, specify reason" style="margin-top:6px; display:none;" />
+        <div class="action-buttons" style="margin-top:10px;">
+          <button onclick="confirmAdminCancel()">✗ Confirm Cancel</button>
+          <button onclick="closeModal('adminCancelModal')" style="background:#999;">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="bookingPickerModal" class="modal">
+      <div class="modal-content picker-modal-content">
+        <span class="close" onclick="closeModal('bookingPickerModal')">&times;</span>
+        <div id="pickerDateStep" class="picker-step active">
+          <div class="picker-card">
+            <div class="picker-title">Select Date</div>
+            <div class="calendar-header">
+              <button type="button" class="calendar-nav" onclick="changePickerMonth(-1)">◀</button>
+              <strong id="pickerMonthLabel"></strong>
+              <button type="button" class="calendar-nav" onclick="changePickerMonth(1)">▶</button>
+            </div>
+            <div class="calendar-weekdays">
+              <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+            </div>
+            <div id="pickerDaysGrid" class="calendar-days"></div>
+          </div>
+          <div class="picker-actions">
+            <button type="button" class="ui-btn-success" onclick="goToPickerTimeStep()">Next: Set Time</button>
+            <button type="button" class="ui-btn-muted" onclick="closeModal('bookingPickerModal')">Cancel</button>
+          </div>
+        </div>
+        <div id="pickerTimeStep" class="picker-step">
+          <div class="picker-card">
+            <div class="picker-title">Select Time</div>
+            <div class="time-selector-wrapper">
+              <div class="time-selector-col" style="grid-column:1/-1;">
+                <div class="time-selector-label">Available Time Slots</div>
+                <div class="time-grid" id="slotButtonsGrid"></div>
+              </div>
+            </div>
+            <div id="pickerSelectionNote" class="picker-selection-note">Select an available time slot.</div>
+          </div>
+          <div class="picker-actions">
+            <button type="button" class="ui-btn-muted" onclick="goToPickerDateStep()">Back to Calendar</button>
+            <button type="button" class="ui-btn-success" onclick="applyBookingPicker()">Create Event</button>
+            <button type="button" class="ui-btn-muted" onclick="closeModal('bookingPickerModal')">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="uiAlertModal" class="modal">
+      <div class="modal-content">
+        <h3 id="uiAlertTitle">Notice</h3>
+        <p id="uiAlertMessage" style="margin-top:8px; line-height:1.5;"></p>
+        <div class="action-buttons" style="margin-top:14px;">
+          <button type="button" onclick="closeUIAlert()">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="uiConfirmModal" class="modal">
+      <div class="modal-content">
+        <h3 id="uiConfirmTitle">Confirm</h3>
+        <p id="uiConfirmMessage" style="margin-top:8px; line-height:1.5;"></p>
+        <div class="action-buttons" style="margin-top:14px;">
+          <button type="button" onclick="confirmUIOk()">Yes</button>
+          <button type="button" onclick="closeUIConfirm()">No</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="uiPromptModal" class="modal">
+      <div class="modal-content">
+        <h3 id="uiPromptTitle">Input Required</h3>
+        <p id="uiPromptMessage" style="margin-top:8px; line-height:1.5;"></p>
+        <input type="text" id="uiPromptInput" placeholder="Type here" style="margin-top:10px;">
+        <div class="action-buttons" style="margin-top:14px;">
+          <button type="button" onclick="submitUIPrompt()">Submit</button>
+          <button type="button" onclick="closeUIPrompt()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    </div>
+
+    </body>
+
+    <script>
+    // ======================= DATA STRUCTURE =======================
+    let currentUser = "";
+    let currentUserData = null;
+    let isAdmin = false;
+    let adminPassword = "admin";
+    let selectedTimeSlot = null;
+    let appointmentsToReschedule = null;
+    let adminCancelingAppt = null;
+    let resetTargetStudentKey = null;
+    let notificationPermission = false;
+    let appointmentNotificationsSent = {}; // Track which appointments have sent notifications
+    let lastPendingAppointmentCount = 0; // Track for admin new appointment alerts
+    const MAX_DAILY_SLOTS = 12; // Maximum appointments allowed per date based on available slots
+    const SLOT_INTERVAL_MINUTES = 60; // Time slot spacing
+    let uiConfirmOnOk = null;
+    let uiPromptOnSubmit = null;
+    let pendingProfilePicture = "";
+    let pickerViewDate = new Date();
+
+    function getApiBase(){
+        if(window.location.protocol === 'file:'){
+            return 'http://localhost:3000';
+        }
+        if(window.location.origin === 'null'){
+            return 'http://localhost:3000';
+        }
+        return window.location.origin;
+    }
+
+    function apiFetch(path, options){
+        const base = getApiBase();
+        const url = new URL(path, base).href;
+        return fetch(url, options);
+    }
+    let pickerSelectedDate = "";
+    let pickerSelectedTime = "";
+    let pickerHour = "08";
+    let pickerMinute = "30";
+    let pickerPeriod = "AM";
+
+    function closeUIAlert(){
+        const modal = document.getElementById("uiAlertModal");
+        if(modal){
+            modal.style.display = "none";
+        }
+    }
+
+    function showUIAlert(message){
+        const modal = document.getElementById("uiAlertModal");
+        const text = document.getElementById("uiAlertMessage");
+        const title = document.getElementById("uiAlertTitle");
+
+        if(!modal || !text || !title){
+            console.warn("UI alert modal not found:", message);
+            return;
+        }
+
+        const msg = String(message ?? "");
+        text.innerText = msg;
+        title.innerText = msg.startsWith("❌") ? "Error" : (msg.startsWith("⚠️") ? "Warning" : "Success");
+        modal.style.display = "block";
+    }
+
+    function closeUIConfirm(){
+        const modal = document.getElementById("uiConfirmModal");
+        if(modal){
+            modal.style.display = "none";
+        }
+        uiConfirmOnOk = null;
+    }
+
+    function confirmUIOk(){
+        const callback = uiConfirmOnOk;
+        closeUIConfirm();
+        if(typeof callback === "function"){
+            callback();
+        }
+    }
+
+    function showUIConfirm(message, onOk){
+        const modal = document.getElementById("uiConfirmModal");
+        const text = document.getElementById("uiConfirmMessage");
+        const title = document.getElementById("uiConfirmTitle");
+
+        if(!modal || !text || !title){
+            console.warn("UI confirm modal not found:", message);
+            return;
+        }
+
+        const msg = String(message ?? "");
+        text.innerText = msg;
+        title.innerText = "Confirm Action";
+        uiConfirmOnOk = onOk;
+        modal.style.display = "block";
+    }
+
+    function closeUIPrompt(){
+        const modal = document.getElementById("uiPromptModal");
+        if(modal){
+            modal.style.display = "none";
+        }
+        const input = document.getElementById("uiPromptInput");
+        if(input){
+            input.value = "";
+        }
+        uiPromptOnSubmit = null;
+    }
+
+    function submitUIPrompt(){
+        const input = document.getElementById("uiPromptInput");
+        const callback = uiPromptOnSubmit;
+        const value = input ? input.value.trim() : "";
+        closeUIPrompt();
+        if(typeof callback === "function"){
+            callback(value);
+        }
+    }
+
+    function showUIPrompt(message, placeholder, onSubmit){
+        const modal = document.getElementById("uiPromptModal");
+        const text = document.getElementById("uiPromptMessage");
+        const title = document.getElementById("uiPromptTitle");
+        const input = document.getElementById("uiPromptInput");
+
+        if(!modal || !text || !title || !input){
+            console.warn("UI prompt modal not found:", message);
+            return;
+        }
+
+        text.innerText = String(message ?? "");
+        title.innerText = "Confirmation Required";
+        input.value = "";
+        input.placeholder = placeholder || "Type here";
+        uiPromptOnSubmit = onSubmit;
+        modal.style.display = "block";
+        input.focus();
+    }
+
+    // Use app-styled dialog instead of browser alert popup.
+    window.alert = showUIAlert;
+
+    // style every button as a call-to-action for consistent spacing/color
+    // this runs when DOM is ready so all <button> elements are available
+    document.addEventListener("DOMContentLoaded", function(){
+        document.querySelectorAll("button").forEach(b=>b.classList.add("cta-btn"));
+    });
+
+    // ======================= NOTIFICATION & REMINDER SYSTEM =======================
+    function requestNotificationPermission() {
+        if ("Notification" in window) {
+            if (Notification.permission === "granted") {
+                notificationPermission = true;
+                console.log("Notifications already authorized");
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        notificationPermission = true;
+                        showBrowserNotification("Notifications Enabled", "You will receive appointment reminders and alerts", "success");
+                        console.log("Notifications enabled");
+                    }
+                });
+            }
+        }
+    }
+
+    function showNotificationBadge(title, message, type = "default") {
+        // Create and show notification badge
+        let badge = document.createElement("div");
+        badge.className = "notification-badge " + type;
+        badge.innerHTML = `<strong>${title}</strong><br>${message}`;
+        document.body.appendChild(badge);
+
+        // Remove after 6 seconds
+        setTimeout(() => {
+            badge.style.opacity = "0";
+            badge.style.transform = "translateX(400px)";
+            setTimeout(() => badge.remove(), 300);
+        }, 6000);
+    }
+
+    function showBrowserNotification(title, message, type = "default") {
+        if (typeof playAudioAlert === 'function') {
+            playAudioAlert(12000); // trigger a 12-second ring/beep on every notification
+        }
+
+        if (notificationPermission && "Notification" in window) {
+            try {
+                let options = {
+                    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><circle cx='64' cy='64' r='60' fill='%23007AFF'/><text x='64' y='75' font-size='48' fill='white' text-anchor='middle' font-weight='bold'>📋</text></svg>",
+                    badge: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><circle cx='64' cy='64' r='60' fill='%23007AFF'/></svg>",
+                    tag: "appointment-reminder",
+                    requireInteraction: type === "urgent"
+                };
+
+                new Notification(title, {
+                    body: message,
+                    ...options
+                });
+
+                // Also show badge
+                showNotificationBadge(title, message, type);
+            } catch (e) {
+                console.log("Notification error:", e);
+                showNotificationBadge(title, message, type);
+            }
+        } else {
+            showNotificationBadge(title, message, type);
+        }
+    }
+
+    function playAudioAlert(duration = 12000) {
+        try {
+            // Use Web Audio API to create a simple beep
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            // Create a pulsing alert sound
+            oscillator.frequency.value = 800; // Hz
+            oscillator.type = "sine";
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            
+            // Pulse pattern
+            let currentTime = audioContext.currentTime;
+            for (let i = 0; i < 6; i++) {
+                gainNode.gain.setValueAtTime(0.3, currentTime + (i * 0.3));
+                gainNode.gain.setValueAtTime(0, currentTime + (i * 0.3) + 0.15);
+            }
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration / 1000);
+        } catch (e) {
+            console.log("Audio alert error:", e);
+        }
+    }
+
+    function checkAppointmentTime() {
+        let now = new Date();
+        let currentTime = String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0');
+        let currentDate = now.toISOString().split('T')[0];
+
+        let appointmentList = [];
+        if (isAdmin) {
+            appointmentList = appointments.filter(a => a.status === "Approved");
+        } else if (currentUserData) {
+            appointmentList = currentUserData.appointments
+                .map(apptId => appointments.find(a => a.id === apptId))
+                .filter(Boolean)
+                .filter(a => a.status === "Approved");
+        } else {
+            return;
+        }
+
+        appointmentList.forEach(appt => {
+            if (!appt || appt.status !== "Approved") return;
+
+            // Check if appointment is NOW
+            if (appt.date === currentDate && appt.time === currentTime) {
+                // Play alert only once per appointment
+                if (!appointmentNotificationsSent[apptId]) {
+                    appointmentNotificationsSent[apptId] = true;
+
+                    // Play audio alert
+                    playAudioAlert(3000);
+
+                    // Show browser notification
+                    showBrowserNotification(
+                        "🚨 Appointment Time!",
+                        `Your appointment is starting NOW! ${appt.service} at ${appt.time}`,
+                        "urgent"
+                    );
+
+                    console.log("Appointment time notification sent for:", apptId);
+                }
+            }
+
+            // Check if appointment is in 15 minutes
+            let apptDateTime = new Date(appt.date + "T" + appt.time);
+            let minutesUntilAppt = (apptDateTime - now) / (1000 * 60);
+
+            if (minutesUntilAppt > 0 && minutesUntilAppt <= 15 && minutesUntilAppt > 14) {
+                let notifKey = apptId + "_15min";
+                if (!appointmentNotificationsSent[notifKey]) {
+                    appointmentNotificationsSent[notifKey] = true;
+
+                    showBrowserNotification(
+                        "⏰ Appointment in 15 Minutes",
+                        `Your appointment is in 15 minutes. ${appt.service} at ${appt.time}`,
+                        "default"
+                    );
+
+                    console.log("15-minute reminder sent for:", apptId);
+                }
+            }
+
+            // Check if appointment is in 1 hour
+            if (minutesUntilAppt > 0 && minutesUntilAppt <= 60 && minutesUntilAppt > 59) {
+                let notifKey = apptId + "_1hour";
+                if (!appointmentNotificationsSent[notifKey]) {
+                    appointmentNotificationsSent[notifKey] = true;
+
+                    showBrowserNotification(
+                        "📋 Appointment Reminder",
+                        `Your appointment is in 1 hour at ${appt.time}`,
+                        "default"
+                    );
+
+                    console.log("1-hour reminder sent for:", apptId);
+                }
+            }
+        });
+    }
+
+    // Database: Students
+    let students = {
+        "8230053": {
+            id: "8230053",
+            name: "Prince Devon Rodela",
+            email: "princedevonrodela.ctu.edu.ph",
+            birthdate: "2004-02-16",
+            password: "password123",
+            firstLogin: true,
+            appointments: [],
+            picture: ""
+        },
+        "8230054": {
+            id: "S002",
+            name: "Maria Santos",
+            email: "maria@student.ctu.edu.ph",
+            birthdate: "2001-05-20",
+            password: "password123",
+            firstLogin: true,
+            appointments: [],
+            picture: ""
+        }
+    };
+
+    // Appointments Database
+    let appointments = [];
+
+    // ======================= LOGIN & AUTHENTICATION =======================
+    // helper functions for sidebar navigation
+    function updateSidebarActive(label){
+        // highlight student links if present
+        document.querySelectorAll('#studentLinks button').forEach(btn=>{
+            btn.classList.toggle('active', btn.textContent.trim().toLowerCase().includes(label.toLowerCase()));
+        });
+        // highlight admin link buttons too
+        document.querySelectorAll('#adminLinks button').forEach(btn=>{
+            btn.classList.toggle('active', btn.textContent.trim().toLowerCase().includes(label.toLowerCase()));
+        });
+    }
+
+    function normalizeDateValue(rawValue){
+        if(!rawValue) return "";
+        const value = rawValue.trim();
+        const isoPattern = /^\d{4}-\d{2}-\d{2}$/;
+        if(isoPattern.test(value)) return value;
+
+        const dateParts = value.split(/[-/.]/);
+        if(dateParts.length === 3){
+            const month = dateParts[0].padStart(2, "0");
+            const day = dateParts[1].padStart(2, "0");
+            const year = dateParts[2];
+            if(year.length === 4){
+                return `${year}-${month}-${day}`;
+            }
+        }
+        return value;
+    }
+
+    function selectServiceOption(value, btn){
+        document.getElementById("service").value = value;
+        document.querySelectorAll(".service-btn").forEach(b => b.classList.remove("active"));
+        if(btn) btn.classList.add("active");
+        selectedTimeSlot = null;
+        document.getElementById("date").value = "";
+        const display = document.getElementById("bookingDateTimeDisplay");
+        if(display){
+            display.innerText = "No date and time selected.";
+        }
+    }
+
+    function selectLogFilterOption(value, btn){
+        document.getElementById("logFilter").value = value;
+        document.querySelectorAll(".log-filter-btn").forEach(b => b.classList.remove("active"));
+        if(btn) btn.classList.add("active");
+    }
+
+    function formatDateISO(dateObj){
+        const y = dateObj.getFullYear();
+        const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+        const d = String(dateObj.getDate()).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+    }
+
+    function time24To12(timeStr){
+        const [hRaw, mRaw] = String(timeStr || "").split(":");
+        let h = Number(hRaw);
+        if(Number.isNaN(h)) return null;
+        const m = String(mRaw || "00").padStart(2, "0");
+        const period = h >= 12 ? "PM" : "AM";
+        h = h % 12;
+        if(h === 0) h = 12;
+        return { hour: String(h).padStart(2, "0"), minute: m, period };
+    }
+
+    function time12To24(hour, minute, period){
+        let h = Number(hour);
+        const m = Number(minute);
+        if(Number.isNaN(h) || Number.isNaN(m)) return "";
+        if(period === "AM"){
+            if(h === 12) h = 0;
+        } else if(period === "PM"){
+            if(h !== 12) h += 12;
+        } else {
+            return "";
+        }
+        return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    }
+
+    function openBookingPicker(){
+        const service = document.getElementById("service").value;
+        if(!service){
+            alert("❌ Please choose a service first.");
+            return;
+        }
+        const dateInput = document.getElementById("date");
+        const existingDate = normalizeDateValue(dateInput ? dateInput.value : "");
+        pickerSelectedDate = existingDate || formatDateISO(new Date());
+        
+        // Parse existing time or default to 8:30 AM
+        if(selectedTimeSlot){
+            const [h, m] = selectedTimeSlot.split(":").map(Number);
+            pickerHour = String(h).padStart(2, "0");
+            pickerMinute = String(m).padStart(2, "0");
+            pickerPeriod = h >= 12 ? "PM" : "AM";
+        } else {
+            pickerHour = "08";
+            pickerMinute = "30";
+            pickerPeriod = "AM";
+        }
+        pickerSelectedTime = selectedTimeSlot || "08:30";
+        
+        pickerViewDate = new Date(pickerSelectedDate + "T00:00:00");
+        renderBookingCalendar();
+        renderBookingTimeChoices();
+        goToPickerDateStep();
+        document.getElementById("bookingPickerModal").style.display = "block";
+    }
+
+    function goToPickerDateStep(){
+        const dateStep = document.getElementById("pickerDateStep");
+        const timeStep = document.getElementById("pickerTimeStep");
+        if(dateStep) dateStep.classList.add("active");
+        if(timeStep) timeStep.classList.remove("active");
+    }
+
+    function goToPickerTimeStep(){
+        if(!pickerSelectedDate){
+            alert("❌ Please select a date first.");
+            return;
+        }
+        const dateStep = document.getElementById("pickerDateStep");
+        const timeStep = document.getElementById("pickerTimeStep");
+        if(dateStep) dateStep.classList.remove("active");
+        if(timeStep) timeStep.classList.add("active");
+        renderBookingTimeChoices();
+    }
+
+    function changePickerMonth(step){
+        pickerViewDate.setMonth(pickerViewDate.getMonth() + step);
+        renderBookingCalendar();
+    }
+
+    function renderBookingCalendar(){
+        const label = document.getElementById("pickerMonthLabel");
+        const grid = document.getElementById("pickerDaysGrid");
+        if(!label || !grid) return;
+        const todayIso = formatDateISO(new Date());
+
+        const year = pickerViewDate.getFullYear();
+        const month = pickerViewDate.getMonth();
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const prevMonthDays = new Date(year, month, 0).getDate();
+
+        label.innerText = pickerViewDate.toLocaleString("en-US", { month: "long", year: "numeric" });
+        grid.innerHTML = "";
+
+        const cells = [];
+        for(let i = 0; i < firstDay; i++){
+            cells.push({ day: prevMonthDays - firstDay + i + 1, current: false, offset: -1 });
+        }
+        for(let d = 1; d <= daysInMonth; d++){
+            cells.push({ day: d, current: true, offset: 0 });
+        }
+        while(cells.length < 42){
+            cells.push({ day: cells.length - (firstDay + daysInMonth) + 1, current: false, offset: 1 });
+        }
+
+        cells.forEach(cell => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "day-btn" + (cell.current ? "" : " other-month");
+            const dayDate = new Date(year, month + cell.offset, cell.day);
+            const iso = formatDateISO(dayDate);
+            btn.innerText = String(cell.day);
+            const dayBookingCount = getDailyAppointmentCount(iso);
+            if(iso < todayIso || dayBookingCount >= MAX_DAILY_SLOTS){
+                btn.classList.add("disabled");
+                if(dayBookingCount >= MAX_DAILY_SLOTS){
+                    btn.title = `Fully booked (${MAX_DAILY_SLOTS} slots)`;
+                }
+            }
+            if(iso === pickerSelectedDate){
+                btn.classList.add("active");
+            }
+            btn.onclick = function(){
+                if(iso < todayIso || dayBookingCount >= MAX_DAILY_SLOTS){
+                    return;
+                }
+                pickerSelectedDate = iso;
+                if(!cell.current){
+                    pickerViewDate = new Date(dayDate.getFullYear(), dayDate.getMonth(), 1);
+                }
+                renderBookingCalendar();
+            };
+            grid.appendChild(btn);
+        });
+    }
+
+    function renderBookingTimeChoices(){
+        const note = document.getElementById("pickerSelectionNote");
+        const slotGrid = document.getElementById("slotButtonsGrid");
+        const service = document.getElementById("service").value;
+        const selectedDate = pickerSelectedDate;
+
+        if(!slotGrid) return;
+        slotGrid.innerHTML = "";
+
+        if(!service || !selectedDate){
+            if(note){
+                note.innerText = "Pick a date first.";
+            }
+            return;
+        }
+
+        if(isDateBookedOut(selectedDate)){
+            if(note){
+                note.innerText = `❌ This date has reached ${MAX_DAILY_SLOTS} bookings and is fully booked.`;
+            }
+            return;
+        }
+
+        const slots = getTimeSlots();
+        let anyAvailable = false;
+
+        slots.forEach(slot => {
+            const formatted = time24To12(slot);
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "time-slot-btn";
+            btn.innerText = formatted ? `${formatted.hour}:${formatted.minute} ${formatted.period}` : slot;
+
+            const booked = appointments.some(a => a.date === selectedDate && a.time === slot && a.status !== "Cancelled");
+            const now = new Date();
+            const todayIso = formatDateISO(now);
+            const [h, m] = slot.split(":").map(Number);
+            const slotDate = new Date(selectedDate + "T" + slot + ":00");
+            const isPast = selectedDate === todayIso && slotDate <= now;
+            if(booked || isPast){
+                btn.classList.add("disabled");
+            } else {
+                anyAvailable = true;
+                btn.onclick = () => {
+                    pickerSelectedTime = slot;
+                    renderBookingTimeChoices();
+                };
+            }
+
+            if(pickerSelectedTime === slot){
+                btn.classList.add("active");
+            }
+            slotGrid.appendChild(btn);
+        });
+
+        if(note){
+            if(!anyAvailable){
+                note.innerText = "❌ No available time slots for this date. Please choose another date.";
+            } else if(pickerSelectedTime){
+                note.innerText = `Selected: ${selectedDate} at ${time24To12(pickerSelectedTime).hour}:${time24To12(pickerSelectedTime).minute} ${time24To12(pickerSelectedTime).period}`;
+            } else {
+                note.innerText = "Select an available time slot.";
+            }
+        }
+    }
+
+    function getTimeSlots(){
+        const slots = [];
+
+        // Morning slots: 08:30, 09:30, 10:30
+        let minutes = 8 * 60 + 30;
+        while(minutes <= 10 * 60 + 30){
+            const hour = String(Math.floor(minutes / 60)).padStart(2, "0");
+            const minute = String(minutes % 60).padStart(2, "0");
+            slots.push(`${hour}:${minute}`);
+            minutes += SLOT_INTERVAL_MINUTES;
+        }
+
+        // Afternoon slots: 13:00 through 21:00
+        minutes = 13 * 60;
+        while(minutes <= 21 * 60){
+            const hour = String(Math.floor(minutes / 60)).padStart(2, "0");
+            const minute = String(minutes % 60).padStart(2, "0");
+            slots.push(`${hour}:${minute}`);
+            minutes += SLOT_INTERVAL_MINUTES;
+        }
+
+        return slots;
+    }
+
+    function getDailyAppointmentCount(date){
+        return appointments.filter(a => a.date === date && a.status !== "Cancelled").length;
+    }
+
+    function isDateBookedOut(date){
+        return getDailyAppointmentCount(date) >= MAX_DAILY_SLOTS;
+    }
+
+    function validatePickedTime(timeValue, silent = false){
+        if(!pickerSelectedDate){
+            return { ok: false, message: "❌ Please select a date first." };
+        }
+
+        const [h, m] = String(timeValue).split(":").map(Number);
+        if(Number.isNaN(h) || Number.isNaN(m)){
+            return { ok: false, message: "❌ Invalid time selected." };
+        }
+
+        const allowedSlots = getTimeSlots();
+        if(!allowedSlots.includes(timeValue)){
+            return { ok: false, message: "❌ Time must be within available booking windows: 8:30–11:00 AM or 1:00–9:00 PM." };
+        }
+
+        if(isDateBookedOut(pickerSelectedDate)){
+            return { ok: false, message: `❌ ${pickerSelectedDate} is fully booked. Please select another date.` };
+        }
+
+        const now = new Date();
+        const nowDateIso = formatDateISO(now);
+        if(pickerSelectedDate === nowDateIso){
+            const slotDate = new Date(now);
+            slotDate.setHours(h, m, 0, 0);
+            if(slotDate <= now){
+                return { ok: false, message: "❌ Please select a future time." };
+            }
+        }
+
+        const booked = appointments.some(a =>
+            a.date === pickerSelectedDate && a.time === timeValue && a.status !== "Cancelled"
+        );
+        if(booked){
+            return { ok: false, message: "❌ This time is already booked." };
+        }
+
+        return { ok: true };
+    }
+
+    function applyBookingPicker(){
+        if(!pickerSelectedDate){
+            alert("❌ Please select a date.");
+            return;
+        }
+        if(isDateBookedOut(pickerSelectedDate)){
+            alert(`❌ ${pickerSelectedDate} is fully booked. Please choose another date.`);
+            return;
+        }
+        if(!pickerSelectedTime){
+            alert("❌ Please select a time.");
+            return;
+        }
+        document.getElementById("date").value = pickerSelectedDate;
+        selectedTimeSlot = pickerSelectedTime;
+
+        const display = document.getElementById("bookingDateTimeDisplay");
+        if(display){
+            display.innerText = `Selected: ${pickerSelectedDate} at ${pickerSelectedTime}`;
+        }
+        closeModal("bookingPickerModal");
+    }
+
+    function showLogin(){
+        document.getElementById("loginSection").classList.remove("hidden");
+        document.getElementById("studentDashboard").classList.add("hidden");
+        document.getElementById("adminDashboard").classList.add("hidden");
+        document.getElementById("firstLoginSection").classList.add("hidden");
+        // hide sidebar entirely during login
+        const sidebar = document.getElementById('sidebar');
+        const adminLinks = document.getElementById('adminLinks');
+        const studentLinks = document.getElementById('studentLinks');
+        if(sidebar) sidebar.classList.add('hidden');
+        if(adminLinks) adminLinks.classList.add('hidden');
+        if(studentLinks) studentLinks.classList.add('hidden');
+    }
+
+
+    function showStudentDashboard(){
+        document.getElementById("loginSection").classList.add("hidden");
+        document.getElementById("firstLoginSection").classList.add("hidden");
+        // hide adminDashboard when returning to student home
+        document.getElementById("adminDashboard").classList.add("hidden");
+        document.getElementById("studentDashboard").classList.remove("hidden");
+
+        // auto enable reminders and notifications
+        requestNotificationPermission();
+        checkReminders();
+
+        loadStudentDashboard();
+        // show sidebar with student links
+        const sidebar = document.getElementById('sidebar');
+        const adminLinks = document.getElementById('adminLinks');
+        const studentLinks = document.getElementById('studentLinks');
+        if(sidebar) sidebar.classList.remove('hidden');
+        if(adminLinks) adminLinks.classList.add('hidden');
+        if(studentLinks) studentLinks.classList.remove('hidden');
+    }
+
+
+    function showAdminDashboard(){
+        document.getElementById("loginSection").classList.add("hidden");
+        document.getElementById("firstLoginSection").classList.add("hidden");
+        document.getElementById("studentDashboard").classList.add("hidden");
+        document.getElementById("adminDashboard").classList.remove("hidden");
+
+        requestNotificationPermission();
+        checkReminders();
+        notifyAdminOfAppointments();
+
+        const sidebar = document.getElementById('sidebar');
+        const studentLinks = document.getElementById('studentLinks');
+        const adminLinks = document.getElementById('adminLinks');
+        if(sidebar) sidebar.classList.remove('hidden');
+        // reveal admin-specific links
+        if(studentLinks) studentLinks.classList.add('hidden');
+        if(adminLinks) adminLinks.classList.remove('hidden');
+        if(currentUserData && currentUserData.name){
+            document.getElementById("adminWelcome").innerText = `Welcome, ${currentUserData.name}`;
+        }
+        updateAdminOverview();
+        renderStudentsList();
+        updateSidebarActive('Overview');
+    }
+
+    async function syncStudentsFromApi(){
+        try {
+            const response = await apiFetch('/api/students');
+            if(!response.ok) return;
+            const list = await response.json();
+            const nextStudents = {};
+            (Array.isArray(list) ? list : []).forEach(student => {
+                if(student && student.id){
+                    nextStudents[student.id] = student;
+                }
+            });
+            if(Object.keys(nextStudents).length > 0){
+                students = nextStudents;
+            }
+        } catch(err){
+            console.error('Failed to sync students from API:', err);
+            alert('❌ Unable to reach backend. Please start server at http://localhost:3000 and refresh.');
+        }
+    }
+
+    function normalizeAppointmentStatus(status){
+        const raw = String(status || '').toLowerCase();
+        if(raw === 'approved') return 'Approved';
+        if(raw === 'cancelled' || raw === 'canceled') return 'Cancelled';
+        return 'Pending';
+    }
+
+    function mapAppointmentFromApi(appt){
+        const userId = appt.studentId || appt.user || '';
+        return {
+            id: appt.id,
+            user: userId,
+            userName: (students[userId] && students[userId].name) ? students[userId].name : userId,
+            service: appt.service,
+            date: appt.date,
+            time: appt.time,
+            status: normalizeAppointmentStatus(appt.status),
+            cancelReason: appt.cancelReason || '',
+            approvalDate: appt.approvalDate || null
+        };
+    }
+
+    async function syncAppointmentsFromApi(){
+        try {
+            const response = await apiFetch('/api/appointments');
+            if(!response.ok) return;
+            const list = await response.json();
+            appointments = (Array.isArray(list) ? list : []).map(mapAppointmentFromApi);
+
+            if(currentUserData && currentUser){
+                const mine = appointments
+                    .filter(a => String(a.user) === String(currentUser))
+                    .map(a => a.id);
+                currentUserData.appointments = mine;
+                if(students[currentUser]){
+                    students[currentUser].appointments = mine;
+                }
+            }
+
+            // Admin notification check after refresh to catch new pending items.
+            notifyAdminOfAppointments();
+        } catch(err){
+            console.error('Failed to sync appointments from API:', err);
+            alert('❌ Unable to reach backend. Please start server at http://localhost:3000 and refresh.');
+        }
+    }
+
+    function saveSession(role, id){
+        try {
+            localStorage.setItem('clinicSession', JSON.stringify({ role, id }));
+        } catch(err){
+            console.error('Failed to save session:', err);
+        }
+    }
+
+    function clearSession(){
+        try {
+            localStorage.removeItem('clinicSession');
+        } catch(err){
+            console.error('Failed to clear session:', err);
+        }
+    }
+
+    async function restoreSession(){
+        let raw;
+        try {
+            raw = localStorage.getItem('clinicSession');
+        } catch(err){
+            console.error('Failed to read session:', err);
+            return false;
+        }
+
+        if(!raw) return false;
+
+        let session;
+        try {
+            session = JSON.parse(raw);
+        } catch(err){
+            clearSession();
+            return false;
+        }
+
+        if(!session || !session.role) return false;
+
+        if(session.role === 'admin'){
+            isAdmin = true;
+            currentUser = 'Clinic Admin';
+            await syncStudentsFromApi();
+            await syncAppointmentsFromApi();
+            showAdminDashboard();
+            return true;
+        }
+
+        if(session.role === 'student' && session.id){
+            try {
+                const response = await fetch('/api/student/' + encodeURIComponent(session.id));
+                if(!response.ok){
+                    clearSession();
+                    return;
+                }
+                const student = await response.json();
+
+                isAdmin = false;
+                currentUser = student.id;
+                currentUserData = {
+                    ...student,
+                    appointments: (students[student.id] && Array.isArray(students[student.id].appointments))
+                        ? students[student.id].appointments
+                        : []
+                };
+                students[currentUser] = {
+                    ...(students[currentUser] || {}),
+                    ...currentUserData
+                };
+
+                await syncAppointmentsFromApi();
+
+                if(currentUserData.firstLogin){
+                    document.getElementById('loginSection').classList.add('hidden');
+                    document.getElementById('firstLoginSection').classList.remove('hidden');
+                } else {
+                    showStudentDashboard();
+                }
+                return true;
+            } catch(err){
+                console.error('Failed to restore student session:', err);
+            }
+        }
+
+        return false;
+    }
+
+    async function login(){
+        let loginId = document.getElementById("loginId").value.trim();
+        let loginPassword = document.getElementById("loginPassword").value;
+
+        if(loginId === "" || loginPassword === ""){
+            alert("❌ Please fill all fields");
+            return;
+        }
+
+        let response;
+        try {
+            response = await apiFetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: loginId, password: loginPassword })
+            });
+        } catch(err){
+            alert("❌ Unable to reach server. Please ensure backend is running at http://localhost:3000.");
+            return;
+        }
+
+        const payload = await response.json();
+        if(!response.ok){
+            alert("❌ " + (payload.error || "Invalid Student ID or credentials"));
+            return;
+        }
+
+        try {
+            if(payload.role === 'admin'){
+                isAdmin = true;
+                currentUser = "Clinic Admin";
+                saveSession('admin', 'admin');
+                await syncStudentsFromApi();
+                await syncStaffFromApi();
+                await syncStaffSchedulesFromApi();
+                await syncAppointmentsFromApi();
+                showAdminDashboard();
+            } else if(payload.role === 'student'){
+                isAdmin = false;
+                currentUser = payload.user.id;
+                saveSession('student', payload.user.id);
+                currentUserData = {
+                    ...payload.user,
+                    password: loginPassword,
+                    appointments: (students[payload.user.id] && Array.isArray(students[payload.user.id].appointments))
+                        ? students[payload.user.id].appointments
+                        : []
+                };
+                students[currentUser] = {
+                    ...(students[currentUser] || {}),
+                    ...currentUserData
+                };
+
+                await syncAppointmentsFromApi();
+
+                requestNotificationPermission();
+
+                if(currentUserData.firstLogin){
+                    document.getElementById("loginSection").classList.add("hidden");
+                    document.getElementById("firstLoginSection").classList.remove("hidden");
+                } else {
+                    showStudentDashboard();
+                }
+            } else {
+                alert("❌ Invalid login response from server");
+                return;
+            }
+        } catch(err){
+            console.error('Post-login UI error:', err);
+            alert("❌ Login succeeded, but the dashboard failed to load. Please refresh once.");
+            return;
+        }
+
+        document.getElementById("loginId").value = "";
+        document.getElementById("loginPassword").value = "";
+    }
+
+    async function completeFirstLogin(){
+        let newPass = document.getElementById("newPasswordFirst").value;
+        let confirmPass = document.getElementById("confirmPasswordFirst").value;
+
+        if(newPass === "" || confirmPass === ""){
+            alert("❌ Please fill all fields");
+            return;
+        }
+
+        if(newPass.length < 6){
+            alert("❌ Password must be at least 6 characters");
+            return;
+        }
+
+        if(newPass !== confirmPass){
+            alert("❌ Passwords do not match");
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/reset-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: currentUser, newPassword: newPass })
+            });
+
+            const payload = await response.json();
+            if (!response.ok) {
+                throw new Error(payload.error || 'Failed to update password');
+            }
+
+            currentUserData.password = newPass;
+            currentUserData.firstLogin = false;
+            students[currentUser] = currentUserData;
+        } catch (err) {
+            alert("❌ " + err.message);
+            return;
+        }
+
+        document.getElementById("firstLoginSection").classList.add("hidden");
+        // switch using helper to ensure sidebar/admin links appear
+        showStudentDashboard();
+
+        alert("✓ Password set successfully! Welcome to CTU Clinic Reservation System");
+    }
+
+    function logout(){
+        clearSession();
+        currentUser = "";
+        currentUserData = null;
+        isAdmin = false;
+        selectedTimeSlot = null;
+
+        showLogin();
+    }
+
+    // ======================= STUDENT FUNCTIONS =======================
+    function loadStudentDashboard(){
+        document.getElementById("studentWelcome").innerText = `Welcome, ${currentUserData.name}`;
+        loadStudentProfile();
+        renderStudentAppointments();
+        checkReminders();
+        checkAppointmentTime(); // Check immediately on load
+        // show profile tab by default
+        switchStudentSection('profile');
+    }
+
+    function loadStudentProfile(){
+        if(currentUserData.picture){
+            document.getElementById("profilePic").src = currentUserData.picture;
+        }
+        document.getElementById("profileStudentId").innerText = currentUserData.id;
+        document.getElementById("profileName").innerText = currentUserData.name;
+        document.getElementById("profileEmail").innerText = currentUserData.email;
+        document.getElementById("profileBirthdate").innerText = currentUserData.birthdate;
+    }
+
+    function openProfileModal(){
+        document.getElementById("editName").value = currentUserData.name;
+        document.getElementById("editEmail").value = currentUserData.email;
+        pendingProfilePicture = currentUserData.picture || "";
+        document.getElementById("profileModal").style.display = "block";
+        // allow the user to pick a new profile picture and preview it immediately
+        let picInput = document.getElementById("editProfilePic");
+        if(picInput){
+            picInput.value = "";
+            picInput.onchange = function(){
+                let file = this.files[0];
+                if(file){
+                    let reader = new FileReader();
+                    reader.onload = function(e){
+                        pendingProfilePicture = e.target.result;
+                        document.getElementById("profilePic").src = pendingProfilePicture;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+        }
+    }
+
+    async function saveProfile(){
+        let name = document.getElementById("editName").value.trim();
+        let email = document.getElementById("editEmail").value.trim();
+
+        if(name === "" || email === ""){
+            alert("❌ Please fill all fields");
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/student/' + encodeURIComponent(currentUser), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name,
+                    email,
+                    picture: pendingProfilePicture
+                })
+            });
+
+            const payload = await response.json();
+            if(!response.ok){
+                throw new Error(payload.error || 'Failed to save profile');
+            }
+
+            currentUserData.name = payload.name;
+            currentUserData.email = payload.email;
+            currentUserData.picture = payload.picture || pendingProfilePicture || "";
+            students[currentUser] = currentUserData;
+        } catch(err){
+            alert("❌ " + err.message);
+            return;
+        }
+
+        loadStudentProfile();
+        closeModal("profileModal");
+        alert("✓ Profile updated successfully!");
+    }
+
+    function openPasswordModal(){
+        document.getElementById("oldPassword").value = "";
+        document.getElementById("studentNewPassword").value = "";
+        document.getElementById("studentConfirmPassword").value = "";
+        document.getElementById("passwordModal").style.display = "block";
+    }
+
+    async function changeStudentPassword(){
+        let oldPass = document.getElementById("oldPassword").value;
+        let newPass = document.getElementById("studentNewPassword").value;
+        let confirmPass = document.getElementById("studentConfirmPassword").value;
+
+        if(oldPass === "" || newPass === "" || confirmPass === ""){
+            alert("❌ Please fill all fields");
+            return;
+        }
+
+        if(oldPass !== currentUserData.password){
+            alert("❌ Current password is incorrect");
+            return;
+        }
+
+        if(newPass.length < 6){
+            alert("❌ New password must be at least 6 characters");
+            return;
+        }
+
+        if(newPass !== confirmPass){
+            alert("❌ Passwords do not match");
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/reset-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: currentUser, newPassword: newPass })
+            });
+
+            const payload = await response.json();
+            if (!response.ok) {
+                throw new Error(payload.error || 'Failed to update password');
+            }
+
+            currentUserData.password = newPass;
+            currentUserData.firstLogin = false;
+            students[currentUser] = currentUserData;
+        } catch (err) {
+            alert("❌ " + err.message);
+            return;
+        }
+
+        closeModal("passwordModal");
+        alert("✓ Password changed successfully!");
+    }
+
+    async function bookAppointment(){
+        let service = document.getElementById("service").value;
+        let date = normalizeDateValue(document.getElementById("date").value);
+        document.getElementById("date").value = date;
+
+        if(!service || !date || !selectedTimeSlot){
+            alert("❌ Please select service, date, and time from Calendar & Clock.");
+            return;
+        }
+
+        const conflict = appointments.some(a =>
+            a.date === date && a.time === selectedTimeSlot && a.status !== "Cancelled"
+        );
+        if(isDateBookedOut(date)){
+            alert("❌ This date is fully booked. Please choose another date.");
+            return;
+        }
+
+        if(conflict){
+            alert("❌ This selected date and time is already booked.");
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/appointments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    studentId: currentUser,
+                    staffId: 'general',
+                    date,
+                    time: selectedTimeSlot,
+                    service
+                })
+            });
+            const payload = await response.json();
+            if(!response.ok){
+                throw new Error(payload.error || 'Failed to book appointment');
+            }
+            await syncAppointmentsFromApi();
+
+            // Auto-enable notification permission and alert student
+            requestNotificationPermission();
+            showBrowserNotification(
+                "✅ Booking Requested",
+                "Your appointment is submitted and is waiting for admin approval.",
+                "success"
+            );
+
+            // notify admin this action has created or updated pending appointments
+            notifyAdminOfAppointments();
+        } catch(err){
+            alert("❌ " + err.message);
+            return;
+        }
+
+        selectedTimeSlot = null;
+        document.getElementById("service").value = "";
+        document.querySelectorAll(".service-btn").forEach(b => b.classList.remove("active"));
+        document.getElementById("date").value = "";
+        const display = document.getElementById("bookingDateTimeDisplay");
+        if(display){
+            display.innerText = "No date and time selected.";
+        }
+
+        renderStudentAppointments();
+        alert("✓ Appointment booked successfully! Awaiting admin approval.");
+    }
+
+    function renderStudentAppointments(){
+        let table = document.getElementById("studentAppointmentTable");
+        table.innerHTML = "";
+
+        currentUserData.appointments.forEach((apptId) => {
+            let appt = appointments.find(a => a.id === apptId);
+            if(!appt) return;
+
+            let statusClass = "appointment-status-" + appt.status.toLowerCase();
+
+            let row = `<tr id="student-appt-row-${String(apptId)}">`;
+            row += "<td>"+appt.service+"</td>";
+            row += "<td>"+appt.date+"</td>";
+            row += "<td>"+appt.time+"</td>";
+            row += `<td class="${statusClass}">●${appt.status}</td>`;
+            row += `<td>${appt.cancelReason ? `<span class="cancel-reason-chip">${appt.cancelReason}</span>` : '<span class="cancel-reason-chip inactive">—</span>'}</td>`;
+            row += `<td class="action-buttons" style="display:flex; gap:5px;">`;
+
+            if(appt.status === "Approved"){
+                row += `<button class="small-btn" onclick="openRescheduleModal('${String(apptId)}')">Reschedule</button>`;
+            }
+
+            if(appt.status !== "Cancelled"){
+                row += `<button class="small-btn dangerous-btn" onclick="cancelAppointment('${String(apptId)}')">✗ Cancel</button>`;
+            }
+            row += `</td>`;
+            row += "</tr>";
+            table.innerHTML += row;
+        });
+
+        // Load appointments for current student if not already loaded
+        if(currentUserData.appointments.length === 0){
+            let userAppts = appointments.filter(a => a.user === currentUser);
+            currentUserData.appointments = userAppts.map(a => a.id);
+        }
+
+        const latestCancelled = currentUserData.appointments
+            .map(id => appointments.find(a => a.id === id))
+            .filter(a => a && a.status === 'Cancelled')
+            .pop();
+
+        if(latestCancelled){
+            displayStudentCancelReceipt(latestCancelled, latestCancelled.cancelReason || 'Cancelled by admin');
+        }
+    }
+
+    function openRescheduleModal(apptId){
+        appointmentsToReschedule = appointments.find(a => String(a.id) === String(apptId));
+        document.getElementById("rescheduleDate").value = appointmentsToReschedule.date;
+        document.getElementById("rescheduleTime").value = appointmentsToReschedule.time;
+        document.getElementById("rescheduleStaff").innerHTML = `<strong>Clinic Slot:</strong> Standard Booking`;
+        document.getElementById("rescheduleModal").style.display = "block";
+    }
+
+    async function confirmReschedule(){
+        let newDate = document.getElementById("rescheduleDate").value;
+        let newTime = document.getElementById("rescheduleTime").value;
+
+        if(!newDate || !newTime){
+            alert("❌ Please select new date and time");
+            return;
+        }
+
+        let conflict = appointments.some(a => 
+            a.date === newDate && a.time === newTime && a.status !== "Cancelled" && a.id !== appointmentsToReschedule.id
+        );
+
+        if(conflict){
+            alert("❌ Time slot already booked!");
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/appointments/' + encodeURIComponent(appointmentsToReschedule.id), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ date: newDate, time: newTime })
+            });
+            const payload = await response.json();
+            if(!response.ok){
+                throw new Error(payload.error || 'Failed to reschedule appointment');
+            }
+            await syncAppointmentsFromApi();
+        } catch(err){
+            alert("❌ " + err.message);
+            return;
+        }
+
+        closeModal("rescheduleModal");
+        renderStudentAppointments();
+        alert("✓ Appointment rescheduled successfully!");
+    }
+
+    function cancelAppointment(apptId){
+        // students are allowed to cancel at any time, even after approval or past date
+        showUIConfirm("⚠️ Are you sure you want to cancel this appointment?", async function(){
+            try {
+                const response = await fetch('/api/appointments/' + encodeURIComponent(apptId), {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'Cancelled' })
+                });
+                const payload = await response.json();
+                if(!response.ok){
+                    throw new Error(payload.error || 'Failed to cancel appointment');
+                }
+                await syncAppointmentsFromApi();
+                renderStudentAppointments();
+                updateAdminOverview();
+                const cancelledAppt = appointments.find(a => a.id === apptId);
+                if(cancelledAppt){
+                    displayStudentCancelReceipt(cancelledAppt, 'You cancelled this appointment');
+                }
+                alert("✓ Appointment cancelled. This slot is now available for other students.");
+            } catch(err){
+                alert("❌ " + err.message);
+            }
+        });
+    }
+
+    function checkReminders(){
+        const now = new Date();
+        const isAdminView = !!isAdmin;
+        const remindersBox = document.getElementById(isAdminView ? "adminRemindersSection" : "remindersSection");
+        if(!remindersBox) return;
+
+        remindersBox.classList.remove("hidden");
+        remindersBox.innerHTML = `<h3>⏰ ${isAdminView ? 'Admin ' : ''}Appointment Reminders</h3>`;
+
+        const approvedUpcoming = [];
+
+        if(isAdminView){
+            appointments.forEach(appt => {
+                if(appt.status !== "Approved") return;
+                const apptDateTime = new Date(appt.date + "T" + appt.time);
+                if(isNaN(apptDateTime.getTime()) || apptDateTime <= now) return;
+                approvedUpcoming.push({ appt, apptDateTime });
+            });
+        } else if(currentUserData){
+            currentUserData.appointments.forEach(apptId => {
+                const appt = appointments.find(a => a.id === apptId);
+                if(!appt || appt.status !== "Approved") return;
+                const apptDateTime = new Date(appt.date + "T" + appt.time);
+                if(isNaN(apptDateTime.getTime()) || apptDateTime <= now) return;
+                approvedUpcoming.push({ appt, apptDateTime });
+            });
+        }
+
+        approvedUpcoming.sort((a, b) => a.apptDateTime - b.apptDateTime);
+
+        if(approvedUpcoming.length === 0){
+            const emptyBox = document.createElement("div");
+            emptyBox.className = "reminder-box";
+            emptyBox.innerHTML = "<strong>No active reminders.</strong> Approved upcoming appointments will appear here.";
+            remindersBox.appendChild(emptyBox);
+            return;
+        }
+
+        approvedUpcoming.forEach(({ appt, apptDateTime }) => {
+            const hoursLeft = (apptDateTime - now) / (1000 * 60 * 60);
+            const dayDiff = Math.floor(hoursLeft / 24);
+
+            let message = `Your appointment is scheduled on <strong>${appt.date}</strong> at <strong>${appt.time}</strong>.`;
+            if(hoursLeft <= 3){
+                message = `Your appointment is in <strong>less than 3 hours</strong> (at ${appt.time}).`;
+            } else if(dayDiff === 1){
+                message = `Your appointment is <strong>tomorrow</strong> at <strong>${appt.time}</strong>.`;
+            } else if(hoursLeft <= 24){
+                message = `Your appointment is in <strong>less than 24 hours</strong> (at ${appt.time}).`;
+            }
+
+            const reminderBox = document.createElement("div");
+            reminderBox.className = "reminder-box";
+            reminderBox.innerHTML = `<strong>⏰ ${appt.service} Reminder:</strong> ${message}<div style="margin-top:12px;"><button class="link-btn" onclick="focusAppointment('${String(appt.id)}')">View Appointment</button></div>`;
+            remindersBox.appendChild(reminderBox);
+        });
+    }
+
+    function focusAppointment(apptId){
+        if(!apptId) return;
+        if(isAdmin){
+            switchAdminTab('appointments');
+            setTimeout(() => {
+                const row = document.getElementById('admin-appt-row-' + apptId);
+                if(row){
+                    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    row.classList.add('highlighted-row');
+                    setTimeout(() => row.classList.remove('highlighted-row'), 3200);
+                }
+            }, 120);
+            return;
+        }
+        switchStudentSection('appointments');
+        setTimeout(() => {
+            const row = document.getElementById('student-appt-row-' + apptId);
+            if(row){
+                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                row.classList.add('highlighted-row');
+                setTimeout(() => row.classList.remove('highlighted-row'), 3200);
+            }
+        }, 120);
+    }
+
+    // ======================= ADMIN FUNCTIONS =======================
+    function switchStudentSection(sectionName){
+        const sections = ['profile','book','appointments','reminders','settings'];
+        sections.forEach(name => {
+            const tab = document.getElementById('student-tab-' + name);
+            if(tab){
+                const isActive = name === sectionName;
+                tab.classList.toggle('active', isActive);
+                tab.classList.toggle('hidden', !isActive);
+            }
+        });
+
+        document.querySelectorAll('#studentDashboard .admin-tab').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.target === sectionName);
+        });
+
+        if(sectionName === 'reminders'){
+            checkReminders();
+        }
+
+        // highlight sidebar link if displayed
+        const btn = document.querySelector('#studentLinks button[data-target="'+sectionName+'"]');
+        if(btn){
+            updateSidebarActive(btn.textContent || btn.innerText);
+        }
+    }
+
+    function switchAdminTab(tabName, buttonElement){
+        // ensure admin dashboard area is visible and hide student area when using admin features
+        document.getElementById("adminDashboard").classList.remove("hidden");
+        document.getElementById("studentDashboard").classList.add("hidden");
+
+        document.querySelectorAll(".tab-content").forEach(tab => {
+            tab.classList.remove("active");
+        });
+        document.querySelectorAll(".admin-tab").forEach(btn => {
+            btn.classList.remove("active");
+        });
+
+        document.getElementById("tab-"+tabName).classList.add("active");
+        const activeButton = buttonElement || Array.from(document.querySelectorAll('.admin-tab')).find(btn => btn.textContent.toLowerCase().includes(tabName));
+        if(activeButton){
+            activeButton.classList.add("active");
+        }
+        // update sidebar active state too
+        updateSidebarActive(tabName.charAt(0).toUpperCase() + tabName.slice(1));
+
+        if(tabName === "overview"){
+            updateAdminOverview();
+        } else if(tabName === "appointments"){
+            renderAdminAppointments();
+        } else if(tabName === "logs"){
+            generateLogs();
+        } else if(tabName === "students"){
+            renderStudentsList();
+        }
+    }
+
+    function updateAdminOverview(){
+        let total = appointments.length;
+        let pending = appointments.filter(a => a.status === "Pending").length;
+        let approved = appointments.filter(a => a.status === "Approved").length;
+        let cancelled = appointments.filter(a => a.status === "Cancelled").length;
+
+        document.getElementById("totalCount").innerText = total;
+        document.getElementById("pendingCount").innerText = pending;
+        document.getElementById("approvedCount").innerText = approved;
+        document.getElementById("cancelledCount").innerText = cancelled;
+        document.getElementById("totalStudents").innerText = Object.keys(students).length;
+        document.getElementById("totalStaff").innerText = 0;
+    }
+
+    function renderAdminAppointments(){
+        let table = document.getElementById("adminAppointmentTable");
+        table.innerHTML = "";
+
+        appointments.forEach((appt) => {
+            let statusClass = "appointment-status-" + appt.status.toLowerCase();
+
+            let row = `<tr id="admin-appt-row-${String(appt.id)}">`;
+            row += "<td>"+appt.user+"</td>";
+            row += "<td>"+appt.service+"</td>";
+            row += "<td>"+appt.date+"</td>";
+            row += "<td>"+appt.time+"</td>";
+            row += `<td class="${statusClass}">●${appt.status}</td>`;
+            row += `<td>${appt.cancelReason ? `<span class="cancel-reason-chip">${appt.cancelReason}</span>` : `<span class="cancel-reason-chip inactive">—</span>`}</td>`;
+            row += `<td style="text-align:left;">
+                        <div class="action-menu-container">
+                            <button class="ellipsis-btn" onclick="toggleAppointmentActionMenu('${String(appt.id)}')">⋯</button>
+                            <div id="action-menu-${String(appt.id)}" class="action-menu">
+                                <button onclick="adminApproveAppointment('${String(appt.id)}')">Accept</button>
+                                <button onclick="openAdminCancelModal('${String(appt.id)}')">Cancel</button>
+                                <button class="dangerous" onclick="adminRemoveAppointment('${String(appt.id)}')">Remove</button>
+                            </div>
+                        </div>
+                    </td>`;
+            row += "</tr>";
+            table.innerHTML += row;
+        });
+    }
+
+    function toggleAppointmentActionMenu(apptId){
+        document.querySelectorAll('.action-menu.active').forEach(menu=>{
+            if(menu.id !== 'action-menu-' + apptId){
+                menu.classList.remove('active');
+            }
+        });
+
+        const menu = document.getElementById('action-menu-' + apptId);
+        if(menu){
+            menu.classList.toggle('active');
+        }
+    }
+
+    async function adminRemoveAppointment(apptId){
+        showUIConfirm('⚠️ Remove this appointment permanently?', async function(){
+            try {
+                const response = await fetch('/api/appointments/' + encodeURIComponent(apptId), { method: 'DELETE' });
+                if(!response.ok){
+                    const payload = await response.json().catch(() => ({}));
+                    throw new Error(payload.error || 'Failed to remove appointment');
+                }
+
+                await syncAppointmentsFromApi();
+                renderAdminAppointments();
+                updateAdminOverview();
+                alert('✓ Appointment removed.');
+            } catch(err){
+                alert('❌ ' + err.message);
+            }
+        });
+    }
+
+    async function adminApproveAppointment(apptId){
+        try {
+            const response = await fetch('/api/appointments/' + encodeURIComponent(apptId), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'Approved' })
+            });
+            const payload = await response.json();
+            if(!response.ok){
+                throw new Error(payload.error || 'Failed to approve appointment');
+            }
+            await syncAppointmentsFromApi();
+            renderAdminAppointments();
+            updateAdminOverview();
+            alert("✓ Appointment approved!");
+        } catch(err){
+            alert("❌ " + err.message);
+        }
+    }
+
+    async function clearAllAppointments(){
+        showUIConfirm('⚠️ Are you sure you want to delete all appointments?', async function(){
+            try {
+                const response = await fetch('/api/appointments', { method: 'DELETE' });
+                if(!response.ok){
+                    const payload = await response.json().catch(() => ({}));
+                    throw new Error(payload.error || 'Failed to clear appointments');
+                }
+
+                await syncAppointmentsFromApi();
+                renderAdminAppointments();
+                updateAdminOverview();
+
+                alert('✓ All appointments cleared.');
+            } catch(err){
+                alert('❌ ' + err.message);
+            }
+        });
+    }
+
+    function openAdminCancelModal(apptId){
+        adminCancelingAppt = appointments.find(a => String(a.id) === String(apptId));
+        if(!adminCancelingAppt) return;
+        document.getElementById('adminCancelReason').value = '';
+        document.getElementById('adminCancelOtherReason').value = '';
+        document.getElementById('adminCancelOtherReason').style.display = 'none';
+        document.getElementById('adminCancelModal').style.display = 'block';
+    }
+
+    document.getElementById('adminCancelReason')?.addEventListener('change', function(){
+        let otherField = document.getElementById('adminCancelOtherReason');
+        if(this.value === 'Other') {
+            otherField.style.display = 'block';
+        } else {
+            otherField.style.display = 'none';
+        }
+    });
+
+    async function confirmAdminCancel(){
+        if(!adminCancelingAppt) return;
+
+        let reason = document.getElementById('adminCancelReason').value;
+        let other = document.getElementById('adminCancelOtherReason').value.trim();
+
+        if(!reason){
+            alert('❌ Please select a cancellation reason');
+            return;
+        }
+        if(reason === 'Other' && !other){
+            alert('❌ Please specify the cancellation reason');
+            return;
+        }
+
+        let finalReason = (reason === 'Other' ? other : reason);
+
+        try {
+            const response = await fetch('/api/appointments/' + encodeURIComponent(adminCancelingAppt.id), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'Cancelled', cancelReason: finalReason })
+            });
+            const payload = await response.json();
+            if(!response.ok){
+                throw new Error(payload.error || 'Failed to cancel appointment');
+            }
+
+            await syncAppointmentsFromApi();
+            renderAdminAppointments();
+            updateAdminOverview();
+
+            if(currentUserData && currentUserData.appointments.includes(adminCancelingAppt.id)){
+                renderStudentAppointments();
+            }
+
+            closeModal('adminCancelModal');
+            displayAdminCancelReceipt(adminCancelingAppt, finalReason);
+            adminCancelingAppt = null;
+        } catch(err){
+            alert("❌ " + err.message);
+        }
+    }
+
+    function displayAdminCancelReceipt(appt, reason){
+        if(!appt) return;
+        const receipt = document.getElementById('adminCancelReceipt');
+        receipt.innerHTML = `
+            <h4>
+                Cancellation Receipt
+                <button class="receipt-info-button" type="button" onclick="toggleCancelDetails()">Info</button>
+            </h4>
+            <p><strong>Student:</strong> ${appt.user}</p>
+            <p><strong>Service:</strong> ${appt.service}</p>
+            <p><strong>Scheduled:</strong> ${appt.date} @ ${appt.time}</p>
+            <div id="cancelDetails" class="cancel-details">
+                <p><strong>Cancelled By:</strong> Admin</p>
+                <p><strong>Reason:</strong> ${reason}</p>
+                <p><strong>Timestamp:</strong> ${new Date().toLocaleString()}</p>
+            </div>
+        `;
+        receipt.classList.remove('hidden');
+
+        setTimeout(() => {
+            if(document.getElementById('adminCancelReceipt')){
+                document.getElementById('adminCancelReceipt').classList.add('hidden');
+            }
+        }, 12000);
+    }
+
+    function toggleCancelDetails(){
+        const details = document.getElementById('cancelDetails');
+        if(!details) return;
+        details.classList.toggle('active');
+    }
+
+    function displayStudentCancelReceipt(appt, reason){
+        if(!appt) return;
+        const receipt = document.getElementById('studentCancelReceipt');
+        receipt.innerHTML = `
+            <h4>
+                Appointment Cancellation Notice
+                <button class="receipt-info-button" type="button" onclick="toggleStudentCancelDetails()">Info</button>
+            </h4>
+            <p><strong>Service:</strong> ${appt.service}</p>
+            <p><strong>Scheduled:</strong> ${appt.date} @ ${appt.time}</p>
+            <div id="studentCancelDetails" class="cancel-details">
+                <p><strong>Status:</strong> ${appt.status}</p>
+                <p><strong>Reason:</strong> ${reason || (appt.cancelReason || 'N/A')}</p>
+                <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+            </div>
+        `;
+        receipt.classList.remove('hidden');
+
+        setTimeout(()=>{
+            if(document.getElementById('studentCancelReceipt')){
+                document.getElementById('studentCancelReceipt').classList.add('hidden');
+            }
+        }, 12000);
+    }
+
+    function toggleStudentCancelDetails(){
+        const details = document.getElementById('studentCancelDetails');
+        if(!details) return;
+        details.classList.toggle('active');
+    }
+
+    function adminCancelAppointment(apptId){
+        openAdminCancelModal(apptId);
+    }
+
+    function generateLogs(){
+        let filter = document.getElementById("logFilter").value;
+        let logDate = normalizeDateValue(document.getElementById("logDate").value);
+        document.getElementById("logDate").value = logDate;
+        let table = document.getElementById("logsTable");
+        let summary = document.getElementById("logsSummary");
+        table.innerHTML = "";
+        summary.innerHTML = "";
+
+        let filtered = appointments;
+
+        // Filter by date range
+        if(filter === "daily" && logDate){
+            filtered = filtered.filter(a => a.date === logDate);
+        } else if(filter === "weekly" && logDate){
+            let date = new Date(logDate);
+            let startDate = new Date(date);
+            startDate.setDate(date.getDate() - date.getDay());
+            let endDate = new Date(startDate);
+            endDate.setDate(startDate.getDate() + 6);
+            
+            filtered = filtered.filter(a => {
+                let aDate = new Date(a.date);
+                return aDate >= startDate && aDate <= endDate;
+            });
+        } else if(filter === "monthly" && logDate){
+            let [year, month] = logDate.split('-');
+            filtered = filtered.filter(a => a.date.startsWith(year + '-' + month));
+        } else if(filter === "approved"){
+            filtered = filtered.filter(a => a.status === "Approved");
+        } else if(filter === "pending"){
+            filtered = filtered.filter(a => a.status === "Pending");
+        } else if(filter === "cancelled"){
+            filtered = filtered.filter(a => a.status === "Cancelled");
+        }
+
+        // Render table
+        filtered.forEach(appt => {
+            let statusClass = "appointment-status-" + appt.status.toLowerCase();
+            let row = "<tr>";
+            row += "<td>"+appt.user+"</td>";
+            row += "<td>"+appt.service+"</td>";
+            row += "<td>"+appt.date+" "+appt.time+"</td>";
+            row += `<td class="${statusClass}">●${appt.status}</td>`;
+            row += "<td>"+(appt.approvalDate || "N/A")+"</td>";
+            row += "</tr>";
+            table.innerHTML += row;
+        });
+
+        // Generate summary
+        let approved = filtered.filter(a => a.status === "Approved").length;
+        let pending = filtered.filter(a => a.status === "Pending").length;
+        let cancelled = filtered.filter(a => a.status === "Cancelled").length;
+
+        summary.innerHTML = `<strong>📊 Report Summary:</strong><br>
+        ✓ Approved: ${approved} | ⏳ Pending: ${pending} | ✗ Cancelled: ${cancelled} | <strong>Total: ${filtered.length}</strong>`;
+    }
+
+    function renderStudentsList(){
+        let table = document.getElementById("studentsTable");
+        table.innerHTML = "";
+
+        Object.entries(students).forEach(([studentKey, student]) => {
+            let apptCount = student.appointments.length;
+            let row = `<tr data-student-id="${student.id}">`;
+            row += `<td class="student-main-cell">
+                        <div class="student-compact">
+                            <img src="${student.picture||'https://via.placeholder.com/44'}" class="student-thumb" alt="${student.name}">
+                            <span class="student-name">${student.name}</span>
+                        </div>
+                    </td>`;
+            row += `<td><button class="small-btn" onclick="toggleStudentDetails('${studentKey}')" style="font-size:10px;">Details</button></td>`;
+            row += "</tr>";
+            row += `<tr id="student-details-${studentKey}" class="student-details-row hidden">
+                        <td colspan="2">
+                            <div class="student-details-box">
+                                <div class="student-details-grid">
+                                    <div class="student-details-item"><strong>Student ID:</strong> ${student.id}</div>
+                                    <div class="student-details-item"><strong>Email:</strong> ${student.email}</div>
+                                    <div class="student-details-item"><strong>Birthdate:</strong> ${student.birthdate || "N/A"}</div>
+                                    <div class="student-details-item"><strong>Appointments:</strong> ${apptCount}</div>
+                                </div>
+                                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                                    <button class="small-btn" onclick="adminResetStudentPassword('${studentKey}')">🔑 Reset Password</button>
+                                    <button class="small-btn" style="background:#e05454; color:#fff;" onclick="adminRemoveStudent('${studentKey}')">🗑️ Remove Student</button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>`;
+            table.innerHTML += row;
+        });
+    }
+
+    function displayStudentSearchResult(student){
+        const result = document.getElementById("studentSearchResult");
+        if(!result){
+            return;
+        }
+        if(!student){
+            result.innerHTML = '<div class="error-msg" style="padding:10px;">No student found with that ID.</div>';
+            return;
+        }
+        result.innerHTML = `
+            <div class="student-details-box" style="padding:12px; background:#f0eff7;">
+                <div class="student-details-grid">
+                    <div class="student-details-item"><strong>Student ID:</strong> ${student.id}</div>
+                    <div class="student-details-item"><strong>Name:</strong> ${student.name}</div>
+                    <div class="student-details-item"><strong>Email:</strong> ${student.email}</div>
+                    <div class="student-details-item"><strong>Birthdate:</strong> ${student.birthdate || 'N/A'}</div>
+                    <div class="student-details-item"><strong>Appointments:</strong> ${student.appointments.length}</div>
+                </div>
+                <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+                    <button class="small-btn" onclick="toggleStudentDetails('${student.id}')">Toggle Full Details</button>
+                    <button class="small-btn" onclick="adminResetStudentPassword('${student.id}')">🔑 Reset Password</button>
+                    <button class="small-btn" style="background:#e05454; color:#fff;" onclick="adminRemoveStudent('${student.id}')">🗑️ Remove Student</button>
+                </div>
+            </div>`;
+    }
+
+    function searchAdminStudentById(){
+        const query = (document.getElementById('adminSearchStudentId').value || '').trim();
+        if(query === ''){
+            displayStudentSearchResult(null);
+            renderStudentsList();
+            return;
+        }
+
+        const matchedKey = Object.keys(students).find(k => k === query || (students[k] && students[k].id === query));
+        const found = matchedKey ? students[matchedKey] : null;
+        displayStudentSearchResult(found);
+
+        document.querySelectorAll('#studentsTable tr').forEach(row => row.classList.add('hidden'));
+        if(found){
+            const targetRow = document.querySelector(`#studentsTable tr[data-student-id='${found.id}']`);
+            if(targetRow){
+                targetRow.classList.remove('hidden');
+                // show associated details row if currently open
+                const detailsRow = document.getElementById(`student-details-${matchedKey}`);
+                if(detailsRow){
+                    detailsRow.classList.remove('hidden');
+                }
+            }
+        }
+    }
+
+    function toggleStudentDetails(studentKey){
+        let detailsRow = document.getElementById("student-details-" + studentKey);
+        if(!detailsRow) return;
+        detailsRow.classList.toggle("hidden");
+    }
+
+    async function adminAddStudent(){
+        const id = document.getElementById('adminNewStudentId').value.trim();
+        const name = document.getElementById('adminNewStudentName').value.trim();
+        const email = document.getElementById('adminNewStudentEmail').value.trim();
+        const rawBirthdate = document.getElementById('adminNewStudentBirthdate').value;
+        const birthdate = normalizeDateValue(rawBirthdate);
+
+        if(!id || !name || !email || !birthdate){
+            alert('❌ All fields are required to add a student.');
+            return;
+        }
+
+        if(!/^\d{4}-\d{2}-\d{2}$/.test(birthdate)){
+            alert('❌ Please enter a valid birthdate in YYYY-MM-DD or MM/DD/YYYY format.');
+            return;
+        }
+
+        try {
+            if(students[id]){
+                alert('❌ Student with this ID already exists.');
+                return;
+            }
+
+            const res = await apiFetch('/api/students', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, name, email, birthdate, picture: '' })
+            });
+            const payload = await res.json();
+
+            if (!res.ok) {
+                throw new Error(payload.error || 'Failed to add student');
+            }
+
+            await syncStudentsFromApi();
+            renderStudentsList();
+            updateAdminOverview();
+
+            document.getElementById('adminNewStudentId').value = '';
+            document.getElementById('adminNewStudentName').value = '';
+            document.getElementById('adminNewStudentEmail').value = '';
+            document.getElementById('adminNewStudentBirthdate').value = '';
+            alert('✓ Student added successfully.');
+        } catch (err) {
+            alert('❌ ' + (err.message || 'Failed to add student.'));
+        }
+    }
+
+    function adminRemoveStudent(studentKey){
+        const student = students[studentKey];
+        if(!student){
+            alert('❌ Student not found.');
+            return;
+        }
+
+        showUIConfirm(`⚠️ Remove student ${student.name} (${student.id})?`, async function(){
+            try {
+                const res = await fetch('/api/students/' + encodeURIComponent(studentKey), {
+                    method: 'DELETE'
+                });
+
+                if (!res.ok) {
+                    const payload = await res.json().catch(() => ({}));
+                    throw new Error(payload.error || 'Failed to remove student');
+                }
+
+                await syncStudentsFromApi();
+                await syncAppointmentsFromApi();
+                renderStudentsList();
+                updateAdminOverview();
+
+                alert('✓ Student removed successfully.');
+            } catch (err) {
+                alert('❌ ' + (err.message || 'Failed to remove student.'));
+            }
+        });
+    }
+
+    function adminResetStudentPassword(studentKey){
+        autoResetStudentPassword(studentKey);
+    }
+
+    async function autoResetStudentPassword(studentKey){
+        const targetStudent = students[studentKey];
+        if(!targetStudent){
+            alert('❌ Student record not found');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/reset-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: targetStudent.id,
+                    newPassword: targetStudent.birthdate,
+                    setFirstLogin: true
+                })
+            });
+            const payload = await response.json();
+            if(!response.ok){
+                throw new Error(payload.error || 'Failed to reset password');
+            }
+
+            targetStudent.password = targetStudent.birthdate;
+            targetStudent.firstLogin = true;
+            students[studentKey] = targetStudent;
+
+            if(currentUser && currentUser === targetStudent.id){
+                currentUserData = targetStudent;
+            }
+
+            alert(`✓ Password reset to birthdate for ${targetStudent.name}`);
+        } catch(err){
+            alert('❌ ' + (err.message || 'Failed to reset password.'));
+        }
+    }
+
+    function openAdminPasswordModal(){
+        const modal = document.getElementById("adminPasswordModal");
+        if(!modal) return;
+        modal.classList.remove("hidden");
+        modal.style.display = "flex";
+        document.getElementById("currentPassword").value = "";
+        document.getElementById("newPassword").value = "";
+        document.getElementById("confirmPassword").value = "";
+    }
+
+    function closeAdminPasswordModal(){
+        const modal = document.getElementById("adminPasswordModal");
+        if(!modal) return;
+        modal.classList.add("hidden");
+        modal.style.display = "none";
+    }
+
+    function adminPasswordModalBackgroundClick(event){
+        if(event.target && event.target.id === 'adminPasswordModal'){
+            closeAdminPasswordModal();
+        }
+    }
+
+    function changeAdminPassword(){
+
+        let current = document.getElementById("currentPassword").value;
+        let newPass = document.getElementById("newPassword").value;
+        let confirm = document.getElementById("confirmPassword").value;
+
+        if(current === "" || newPass === "" || confirm === ""){
+            alert("❌ All fields are required!");
+            return;
+        }
+
+        if(current !== adminPassword){
+            alert("❌ Current password is incorrect!");
+            return;
+        }
+
+        if(newPass.length < 4){
+            alert("❌ New password must be at least 4 characters!");
+            return;
+        }
+
+        if(newPass !== confirm){
+            alert("❌ Passwords do not match!");
+            return;
+        }
+
+        adminPassword = newPass;
+        document.getElementById("currentPassword").value = "";
+        document.getElementById("newPassword").value = "";
+        document.getElementById("confirmPassword").value = "";
+        alert("✓ Admin password changed successfully!");
+        closeAdminPasswordModal();
+    }
+
+    function downloadBackup(){
+        let backup = {
+            students: students,
+            appointments: appointments,
+            timestamp: new Date().toISOString()
+        };
+
+        let dataStr = JSON.stringify(backup, null, 2);
+        let dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+
+        let exportFileDefaultName = 'clinic_backup_' + new Date().toISOString().split('T')[0] + '.json';
+
+        let linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+
+        alert("✓ Backup downloaded successfully!");
+    }
+
+    function clearAllData(){
+        showUIConfirm("⚠️ WARNING: This will delete ALL appointments, students, and staff records permanently!", function(){
+            showUIPrompt("Type DELETE to confirm:", "Type DELETE", function(confirmation){
+                if(confirmation === "DELETE"){
+                    students = {};
+                    appointments = [];
+                    updateAdminOverview();
+                    renderAdminAppointments();
+                    renderStudentsList();
+                    alert("⚠️ All data has been cleared!");
+                } else if(confirmation !== ""){
+                    alert("❌ Confirmation text did not match DELETE.");
+                }
+            });
+        });
+    }
+
+    // ======================= MODAL FUNCTIONS =======================
+    function openResetPasswordModal(studentKey = null) {
+        if(studentKey){
+            resetTargetStudentKey = studentKey;
+        } else if(currentUser){
+            resetTargetStudentKey = currentUser;
+        } else {
+            resetTargetStudentKey = null;
+        }
+
+        const targetStudent = resetTargetStudentKey ? students[resetTargetStudentKey] : null;
+        if(!targetStudent){
+            alert("❌ Student record not found");
+            return;
+        }
+
+        document.getElementById("resetPasswordTitle").innerText = "Reset Password";
+        document.getElementById("resetPasswordTarget").innerText = isAdmin
+            ? `Student: ${targetStudent.name} (${targetStudent.id})`
+            : `Account: ${targetStudent.name} (${targetStudent.id})`;
+        document.getElementById("resetNewPassword").value = "";
+        document.getElementById("resetConfirmPassword").value = "";
+        const modal = document.getElementById('resetPasswordModal');
+        modal.style.display = 'block';
+    }
+
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.style.display = 'none';
+    }
+
+    async function resetStudentPassword() {
+        const newPassword = document.getElementById('resetNewPassword').value.trim();
+        const confirmPassword = document.getElementById('resetConfirmPassword').value.trim();
+        const targetStudent = resetTargetStudentKey ? students[resetTargetStudentKey] : null;
+
+        if (!targetStudent) {
+            alert('❌ Student record not found');
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            alert('❌ Passwords do not match!');
+            return;
+        }
+
+        if (newPassword.length < 6) {
+            alert('❌ Password must be at least 6 characters long!');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/reset-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: targetStudent.id, newPassword: newPassword })
+            });
+
+            const payload = await response.json();
+            if (!response.ok) {
+                throw new Error(payload.error || 'Failed to reset password');
+            }
+
+            targetStudent.password = newPassword;
+            targetStudent.firstLogin = false;
+            students[resetTargetStudentKey] = targetStudent;
+        } catch (err) {
+            alert('❌ ' + err.message);
+            return;
+        }
+
+        if(currentUser && students[currentUser]){
+            currentUserData = students[currentUser];
+        }
+
+        closeModal('resetPasswordModal');
+        alert(`✓ Password reset successfully for ${targetStudent.name}`);
+    }
+
+    // Auto-refresh reminders and check appointment times every minute
+    setInterval(() => {
+        if(isAdmin || currentUserData){
+            checkReminders();
+            checkAppointmentTime();
+        }
+    }, 60000);
+
+    // Also check appointment time every 30 seconds for better accuracy
+    setInterval(() => {
+        if(isAdmin || currentUserData){
+            checkAppointmentTime();
+        }
+    }, 30000);
+
+    // ======================= ADMIN NOTIFICATION SYSTEM =======================
+    function notifyAdminOfAppointments() {
+        if(!isAdmin) return;
+
+        const pendingAppointments = appointments.filter(a => a.status === "Pending");
+        const pendingCount = pendingAppointments.length;
+
+        if(pendingCount > 0){
+            if(pendingCount > lastPendingAppointmentCount){
+                const diff = pendingCount - lastPendingAppointmentCount;
+                showBrowserNotification(
+                    "📋 New Appointment Request",
+                    `${diff} new appointment${diff===1?"":"s"} awaiting approval. Pending total: ${pendingCount}.`,
+                    "urgent"
+                );
+            }
+            showAdminNotification(pendingCount);
+        }
+
+        lastPendingAppointmentCount = pendingCount;
+    }
+
+    function showAdminNotification(count) {
+        if ("Notification" in window) {
+            if (Notification.permission === "granted") {
+                new Notification("📋 Appointment Alert", {
+                    body: `You have ${count} pending appointments to review.`,
+                    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><circle cx='64' cy='64' r='60' fill='%23007AFF'/><text x='64' y='75' font-size='48' fill='white' text-anchor='middle' font-weight='bold'>📋</text></svg>"
+                });
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        showAdminNotification(count);
+                    }
+                });
+            }
+        } else {
+            alert(`You have ${count} pending appointments to review.`);
+        }
+    }
+
+    // Request notification permission on page load
+    document.addEventListener("DOMContentLoaded", async function () {
+        const appRoot = document.getElementById('appRoot');
+        const loadingScreen = document.getElementById('loadingScreen');
+
+        if ("Notification" in window && Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
+
+        await syncStudentsFromApi();
+        const restored = await restoreSession();
+        if(!restored){
+            showLogin();
+        }
+
+        if(appRoot) appRoot.classList.remove('hidden');
+        if(loadingScreen) loadingScreen.classList.add('hidden');
+
+        // Check for appointments periodically
+        setInterval(notifyAdminOfAppointments, 60000); // Check every 60 seconds
+    });
+</script>
+
+</body>
+</html>

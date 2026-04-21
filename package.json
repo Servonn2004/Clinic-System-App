@@ -1,0 +1,18 @@
+{
+  "name": "ctu-clinic-backend",
+  "version": "1.0.0",
+  "description": "Backend API for the CTU Clinic Reservation System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.3.1",
+    "express": "^4.18.2",
+    "mongoose": "^7.5.0",
+    "nanoid": "^4.0.2",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.4"
+  }
+}
